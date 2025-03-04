@@ -1,0 +1,21 @@
+# Ignore IDE-specific files
+.idea/
+
+# Ignore build and cache files
+client/obj/
+client/bin/
+
+# Ignore NuGet-generated files
+client/project.assets.json
+client/project.nuget.cache
+client/project.packagespec.json
+client/*.nuget.*
+client/*.dgspec.json
+client/*.props
+client/*.targets
+
+# Ignore Rider and JetBrains specific files
+*.suo
+*.user
+*.sln.dotsettings
+*.csproj.user
