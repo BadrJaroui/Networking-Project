@@ -4,6 +4,7 @@
 # Ignore build and cache files
 client/obj/
 client/bin/
+server/obj/
 
 # Ignore NuGet-generated files
 client/project.assets.json
