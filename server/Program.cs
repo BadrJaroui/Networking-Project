@@ -36,6 +36,25 @@ class ServerUDP
 
     // TODO: [Read the JSON file and return the list of DNSRecords]
 
+    public class DnsRecord
+    {
+        public string Type { get; set; }
+        public string Name { get; set; }
+        public string Value { get; set; }
+        public int TTL { get; set; }
+        
+    }
+    public static List<DnsRecord> ParseDNS()
+    {
+        List<DnsRecord> records = new();
+        using (StreamReader rdr = new("DNSrecords.json"))
+        {
+            string json = rdr.ReadToEnd();
+            records = JsonSerializer.Deserialize<List<DnsRecord>>(json);
+        }
+
+        return records;
+    }
 
 
 
@@ -44,7 +63,7 @@ class ServerUDP
 
 
         // TODO: [Create a socket and endpoints and bind it to the server IP address and port number]
-
+        
 
 
         // TODO:[Receive and print a received Message from the client]
