@@ -39,7 +39,7 @@ class ClientUDP
     {
 
         //TODO: [Create endpoints and socket]
-
+        SocketCreation();
 
         //TODO: [Create and send HELLO]
 
@@ -62,5 +62,12 @@ class ClientUDP
 
 
 
+    }
+    
+    public static void SocketCreation()
+    {
+        Socket socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Udp);
+        socket.Connect(new IPEndPoint(IPAddress.Loopback, 8080));
+        Console.WriteLine("Connection started.");
     }
 }

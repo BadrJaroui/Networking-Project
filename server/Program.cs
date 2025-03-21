@@ -51,13 +51,10 @@ class ServerUDP
     {
         // TODO: [Create a socket and endpoints and bind it to the server IP address and port number]
         ServerBinding(IPAddress.Any, 8080);
-
-
+        
         // TODO:[Receive and print a received Message from the client]
-
-
-
-
+        
+        
         // TODO:[Receive and print Hello]
 
 
@@ -86,9 +83,12 @@ class ServerUDP
 
     public static void ServerBinding(IPAddress ip, int port)
     {
-        Socket socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        Socket socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Udp);
 
         //IPEndPoint endpoint = new(IPAddress.Any, 8080);
         IPEndPoint endpoint = new(ip, port);
+
+        socket.Bind(endpoint);
+        socket.Listen(3);
     }
 }
