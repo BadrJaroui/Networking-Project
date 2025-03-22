@@ -31,7 +31,7 @@ class ClientUDP
 {
 
     //TODO: [Deserialize Setting.json]
-    static string configFile = @"../Setting.json";
+    static string configFile = @"../../../../Setting.json";
     static string configContent = File.ReadAllText(configFile);
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
 
