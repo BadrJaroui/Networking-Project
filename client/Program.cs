@@ -36,7 +36,7 @@ class ClientUDP
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
 
     private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-    private static IPEndPoint endpoint = new IPEndPoint(IPAddress.Loopback, 8080);
+    private static IPEndPoint endpoint = new IPEndPoint(IPAddress.Loopback, 49152);
     
     public static void start()
     {
