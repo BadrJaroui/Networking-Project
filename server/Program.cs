@@ -34,7 +34,7 @@ class ServerUDP
     static string configContent = File.ReadAllText(configFile);
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
     
-    private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Udp);
+    private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
     private static IPEndPoint endpoint = new(IPAddress.Any, 8080);
 
     // TODO: [Read the JSON file and return the list of DNSRecords]
