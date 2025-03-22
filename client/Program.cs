@@ -10,6 +10,7 @@ using System.Text.Json.Serialization;
 using LibData;
 
 // SendTo();
+// Locally ran port and IP for testing
 class Program
 {
     static void Main(string[] args)
@@ -34,12 +35,14 @@ class ClientUDP
     static string configContent = File.ReadAllText(configFile);
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
 
-
+    private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+    private static IPEndPoint endpoint = new IPEndPoint(IPAddress.Loopback, 8080);
+    
     public static void start()
     {
 
         //TODO: [Create endpoints and socket]
-        SocketCreation();
+        SocketCreation(socket, endpoint);
 
         //TODO: [Create and send HELLO]
 
@@ -59,15 +62,11 @@ class ClientUDP
         //TODO: [Receive and print End from server]
 
 
-
-
-
     }
     
-    public static void SocketCreation()
+    public static void SocketCreation(Socket socket, IPEndPoint endpoint)
     {
-        Socket socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Udp);
-        socket.Connect(new IPEndPoint(IPAddress.Loopback, 8080));
+        socket.Connect(endpoint);
         Console.WriteLine("Connection started.");
     }
 }

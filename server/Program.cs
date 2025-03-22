@@ -33,6 +33,9 @@ class ServerUDP
     static string configFile = @"../Setting.json";
     static string configContent = File.ReadAllText(configFile);
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
+    
+    private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Udp);
+    private static IPEndPoint endpoint = new(IPAddress.Any, 8080);
 
     // TODO: [Read the JSON file and return the list of DNSRecords]
     public static List<DNSRecord> ParseDNS()
@@ -50,7 +53,7 @@ class ServerUDP
     public static void start()
     {
         // TODO: [Create a socket and endpoints and bind it to the server IP address and port number]
-        ServerBinding(IPAddress.Any, 8080);
+        ServerBinding(socket, endpoint);
         
         // TODO:[Receive and print a received Message from the client]
         
@@ -81,14 +84,8 @@ class ServerUDP
 
     }
 
-    public static void ServerBinding(IPAddress ip, int port)
+    public static void ServerBinding(Socket socket, IPEndPoint endpoint)
     {
-        Socket socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Udp);
-
-        //IPEndPoint endpoint = new(IPAddress.Any, 8080);
-        IPEndPoint endpoint = new(ip, port);
-
         socket.Bind(endpoint);
-        socket.Listen(3);
     }
 }
