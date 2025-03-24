@@ -36,21 +36,59 @@ class ClientUDP
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
 
     private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-    private static IPEndPoint endpoint = new IPEndPoint(IPAddress.Loopback, 49152);
-    
+    private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Loopback, 49153);
+    private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Any, 49152);
     public static void start()
     {
 
         //TODO: [Create endpoints and socket]
-        SocketCreation(socket, endpoint);
-
+        SocketCreation(socket, ClientEndpoint);
+        EndPoint convertedEndpoint = (EndPoint)ServerEndpoint;
         //TODO: [Create and send HELLO]
+        try
+        {
+
+            //verstuurd hello
+            byte[] hellomaxsize = Encoding.ASCII.GetBytes("HELLO");
+            int bytessent = socket.SendTo(hellomaxsize,ServerEndpoint);
+            Console.WriteLine($"Sent {bytessent} bytes to {ServerEndpoint }");
+
+            //ontvangt welcome
+            byte[] welcomemaxsize = Encoding.ASCII.GetBytes("WELCOME");
+            int recbytes = socket.ReceiveFrom(welcomemaxsize,ref convertedEndpoint);
+          
+            string convertedmessage =  Encoding.ASCII.GetString(welcomemaxsize,0,recbytes);
+            Console.WriteLine("received message: " + convertedmessage);
+       
+            
+        }
+        catch (Exception ex)
+        {
+             Console.WriteLine("exception message:" + ex.Message);
+        }
+          
+
 
         //TODO: [Receive and print Welcome from server]
+       
+        try 
+        {
+            byte[] messagemaxsize = new byte[10];
+         
+            int recbytes = socket.ReceiveFrom(messagemaxsize,ref convertedEndpoint);
+            string encoded = Encoding.ASCII.GetString(messagemaxsize,0,recbytes);
+            Console.WriteLine("encoded: " +encoded);
 
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("exception message:" + ex.Message);
+        }
+
+        socket.Close();
         // TODO: [Create and send DNSLookup Message]
 
-
+       
         //TODO: [Receive and print DNSLookupReply from server]
 
 
@@ -66,7 +104,7 @@ class ClientUDP
     
     public static void SocketCreation(Socket socket, IPEndPoint endpoint)
     {
-        socket.Connect(endpoint);
+        socket.Bind(endpoint);
         Console.WriteLine("Connection started.");
     }
 }
