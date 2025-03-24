@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Net;
@@ -35,7 +35,9 @@ class ServerUDP
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
     
     private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-    private static IPEndPoint endpoint = new(IPAddress.Parse(setting.ClientIPAddress), setting.ClientPortNumber);
+
+  private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Loopback, 49153);
+    private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Any, 49152);
 
     // TODO: [Read the JSON file and return the list of DNSRecords]
     public static List<DNSRecord> ParseDNS()
@@ -53,18 +55,39 @@ class ServerUDP
     public static void start()
     {
         // TODO: [Create a socket and endpoints and bind it to the server IP address and port number]
-        ServerBinding(socket, endpoint);
-        
+       
+        ServerBinding(socket, ServerEndpoint); 
+        EndPoint convertedEndpoint = (EndPoint)ClientEndpoint;
         // TODO:[Receive and print a received Message from the client]
-        
-        
+      
         // TODO:[Receive and print Hello]
+            try   
+            {
+                byte[] messagesize = new byte[5];
+                
+                Console.WriteLine("trying to receive message");
+                int receivedbytes = socket.ReceiveFrom(messagesize,ref convertedEndpoint);
+                string convertedmessage =  Encoding.ASCII.GetString(messagesize,0,receivedbytes);
+                
+                
+                Console.WriteLine($" {convertedmessage}");
 
+                byte[] message = Encoding.ASCII.GetBytes("WELCOME");
+                Console.WriteLine("Sending data.");
+                int bytessent = socket.SendTo(message,convertedEndpoint);    
+                Console.WriteLine($"Sent welcome message to: " + convertedEndpoint);
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("exception: " + ex.Message);
+            }
+           
 
 
         // TODO:[Send Welcome to the client]
-
-
+          
         // TODO:[Receive and print DNSLookup]
 
 
@@ -86,6 +109,9 @@ class ServerUDP
 
     public static void ServerBinding(Socket socket, IPEndPoint endpoint)
     {
+
         socket.Bind(endpoint);
+        Console.WriteLine("connection binded");
+        
     }
 }
