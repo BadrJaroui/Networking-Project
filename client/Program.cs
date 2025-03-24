@@ -36,7 +36,7 @@ class ClientUDP
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
 
     private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-    private static IPEndPoint endpoint = new IPEndPoint(IPAddress.Loopback, 49152);
+    private static IPEndPoint endpoint = new (IPAddress.Parse(setting.ServerIPAddress), setting.ServerPortNumber);
     
     public static void start()
     {
@@ -49,7 +49,6 @@ class ClientUDP
         //TODO: [Receive and print Welcome from server]
 
         // TODO: [Create and send DNSLookup Message]
-
 
         //TODO: [Receive and print DNSLookupReply from server]
 
@@ -69,4 +68,6 @@ class ClientUDP
         socket.Connect(endpoint);
         Console.WriteLine("Connection started.");
     }
+    
+    
 }
