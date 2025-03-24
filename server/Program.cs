@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Net;
@@ -35,8 +35,10 @@ class ServerUDP
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
     
     private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
   private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Loopback, 49153);
     private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Any, 49152);
+
     // TODO: [Read the JSON file and return the list of DNSRecords]
     public static List<DNSRecord> ParseDNS()
     {

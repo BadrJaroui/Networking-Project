@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Net;
 using System.Net.Sockets;
@@ -36,8 +36,10 @@ class ClientUDP
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
 
     private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
     private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Loopback, 49153);
     private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Any, 49152);
+
     public static void start()
     {
 
@@ -88,7 +90,6 @@ class ClientUDP
         socket.Close();
         // TODO: [Create and send DNSLookup Message]
 
-       
         //TODO: [Receive and print DNSLookupReply from server]
 
 
@@ -107,4 +108,6 @@ class ClientUDP
         socket.Bind(endpoint);
         Console.WriteLine("Connection started.");
     }
+    
+    
 }
