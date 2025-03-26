@@ -1,5 +1,6 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Data.SqlTypes;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -35,6 +36,7 @@ class ClientUDP
     static string configContent = File.ReadAllText(configFile);
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
 
+
     private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
     private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Loopback, 49153);
@@ -46,56 +48,51 @@ class ClientUDP
         //TODO: [Create endpoints and socket]
         SocketCreation(socket, ClientEndpoint);
         EndPoint convertedEndpoint = (EndPoint)ServerEndpoint;
-        //TODO: [Create and send HELLO]
+       
         try
         {
+            //TODO: [Create and send HELLO]
 
-            //verstuurd hello
             byte[] hellomaxsize = Encoding.ASCII.GetBytes("HELLO");
-            int bytessent = socket.SendTo(hellomaxsize,ServerEndpoint);
-            Console.WriteLine($"Sent {bytessent} bytes to {ServerEndpoint }");
+            int hellobytes = socket.SendTo(hellomaxsize,ServerEndpoint);
+            Console.WriteLine($"Sent {hellobytes} bytes to {ServerEndpoint }");
 
-            //ontvangt welcome
+            //
+
+            //TODO: [Receive and print Welcome from server]
+
             byte[] welcomemaxsize = Encoding.ASCII.GetBytes("WELCOME");
             int recbytes = socket.ReceiveFrom(welcomemaxsize,ref convertedEndpoint);
-          
             string convertedmessage =  Encoding.ASCII.GetString(welcomemaxsize,0,recbytes);
             Console.WriteLine("received message: " + convertedmessage);
-       
+
+            //
+
+            // TODO: [Create and send DNSLookup Message]
+
+            Message Message1 = new Message ();
+            Message1.MsgId = 1;
+            Message1.MsgType = MessageType.DNSLookup;
+            Message1.Content = "www.outlook.com";
             
-        }
-        catch (Exception ex)
-        {
-             Console.WriteLine("exception message:" + ex.Message);
-        }
-          
+            string  serializeDNS = JsonSerializer.Serialize(Message1);
+            byte[] DNSMessageSize = Encoding.ASCII.GetBytes(serializeDNS);
+            int DNSBytesSent = socket.SendTo(DNSMessageSize, ServerEndpoint);
+            Console.WriteLine($"Sent {DNSBytesSent} to {ServerEndpoint }");
 
-
-        //TODO: [Receive and print Welcome from server]
-       
-        try 
-        {
-            byte[] messagemaxsize = new byte[10];
-         
-            int recbytes = socket.ReceiveFrom(messagemaxsize,ref convertedEndpoint);
-            string encoded = Encoding.ASCII.GetString(messagemaxsize,0,recbytes);
-            Console.WriteLine("encoded: " +encoded);
-
+            //
         }
         catch (Exception ex)
         {
             Console.WriteLine("exception message:" + ex.Message);
         }
-
-        socket.Close();
-        // TODO: [Create and send DNSLookup Message]
-
+       
         //TODO: [Receive and print DNSLookupReply from server]
-
 
         //TODO: [Send Acknowledgment to Server]
 
         // TODO: [Send next DNSLookup to server]
+
         // repeat the process until all DNSLoopkups (correct and incorrect onces) are sent to server and the replies with DNSLookupReply
 
         //TODO: [Receive and print End from server]
