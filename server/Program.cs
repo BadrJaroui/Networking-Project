@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Net;
@@ -57,45 +57,46 @@ class ServerUDP
         // TODO: [Create a socket and endpoints and bind it to the server IP address and port number]
        
         ServerBinding(socket, ServerEndpoint); 
+
+        // Converts IPEndpoint to Endpoint so that we can use it to receive messages
         EndPoint convertedEndpoint = (EndPoint)ClientEndpoint;
         // TODO:[Receive and print a received Message from the client]
       
-        // TODO:[Receive and print Hello]
-            try   
-            {
-                byte[] messagesize = new byte[5];
-                
-                Console.WriteLine("trying to receive message");
-                int receivedbytes = socket.ReceiveFrom(messagesize,ref convertedEndpoint);
-                string convertedmessage =  Encoding.ASCII.GetString(messagesize,0,receivedbytes);
-                
-                
-                Console.WriteLine($" {convertedmessage}");
+        try   
+        { 
+            // TODO:[Receive and print Hello]
+            byte[] messagesize = new byte[5];
+            Console.WriteLine("trying to receive message");
+            int receivedbytes = socket.ReceiveFrom(messagesize,ref convertedEndpoint);
+            string convertedmessage =  Encoding.ASCII.GetString(messagesize,0,receivedbytes);
+            Console.WriteLine(convertedmessage);
 
-                byte[] message = Encoding.ASCII.GetBytes("WELCOME");
-                Console.WriteLine("Sending data.");
-                int bytessent = socket.SendTo(message,convertedEndpoint);    
-                Console.WriteLine($"Sent welcome message to: " + convertedEndpoint);
+            // TODO:[Send Welcome to the client]
+            byte[] welcomeMessageSize = Encoding.ASCII.GetBytes("WELCOME");
+            Console.WriteLine("Sending data.");
+            int bytessent = socket.SendTo(welcomeMessageSize,convertedEndpoint);    
+            Console.WriteLine($"Sent welcome message to: " + convertedEndpoint);
 
+            // TODO:[Receive and print DNSLookup]
+            byte[] DNSMessageSize = new byte[1000];
+            int receivedDNS = socket.ReceiveFrom(DNSMessageSize, ref convertedEndpoint);
+            string convertedDNSmessage = Encoding.ASCII.GetString(DNSMessageSize,0,receivedDNS);
+            Console.WriteLine(convertedDNSmessage);
 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("exception: " + ex.Message);
-            }
-           
+            //door de json file heen zoeken dmv de deserializedDNS
+            Message deserializedDNS = JsonSerializer.Deserialize<Message>(convertedDNSmessage);
 
-
-        // TODO:[Send Welcome to the client]
-          
-        // TODO:[Receive and print DNSLookup]
-
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("exception: " + ex.Message);
+        }
+        
 
         // TODO:[Query the DNSRecord in Json file]
+        
 
         // TODO:[If found Send DNSLookupReply containing the DNSRecord]
-
-
 
         // TODO:[If not found Send Error]
 
@@ -109,9 +110,9 @@ class ServerUDP
 
     public static void ServerBinding(Socket socket, IPEndPoint endpoint)
     {
-
         socket.Bind(endpoint);
         Console.WriteLine("connection binded");
-        
+
+
     }
 }
