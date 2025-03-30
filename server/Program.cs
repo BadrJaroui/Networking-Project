@@ -40,10 +40,10 @@ class ServerUDP
     private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Any, 49152);
 
     // TODO: [Read the JSON file and return the list of DNSRecords]
-    public static List<DNSRecord> ParseDNS()
+    public static List<DNSRecord> ParsedDNS()
     {
         List<DNSRecord> records = new();
-        using (StreamReader rdr = new("DNSrecords.json"))
+        using (StreamReader rdr = new("../../../DNSrecords.json"))
         {
             string json = rdr.ReadToEnd();
             records = JsonSerializer.Deserialize<List<DNSRecord>>(json);
@@ -84,18 +84,15 @@ class ServerUDP
             Console.WriteLine(convertedDNSmessage);
 
             //door de json file heen zoeken dmv de deserializedDNS
-            Message deserializedDNS = JsonSerializer.Deserialize<Message>(convertedDNSmessage);
-
+            //Message deserializedDNS = JsonSerializer.Deserialize<Message>(convertedDNSmessage);
         }
         catch (Exception ex)
         {
             Console.WriteLine("exception: " + ex.Message);
         }
         
-
         // TODO:[Query the DNSRecord in Json file]
         
-
         // TODO:[If found Send DNSLookupReply containing the DNSRecord]
 
         // TODO:[If not found Send Error]
@@ -112,7 +109,37 @@ class ServerUDP
     {
         socket.Bind(endpoint);
         Console.WriteLine("connection binded");
+    }
 
+    public static Message DNSMatchCheck(string convertedDNSmessage)
+    {
+        Dictionary<string, object> DNSdict = JsonSerializer.Deserialize<Dictionary<string, object>>(convertedDNSmessage);
+        List<DNSRecord> records = ParsedDNS();
+        
+        foreach (DNSRecord record in records)
+        {
+            if (record.Name == DNSdict["content"])
+            {
+                Message matchMsg = new();
+                matchMsg.MsgId = 2;
+                matchMsg.MsgType = MessageType.DNSLookupReply;
+                matchMsg.Content = record;
 
+                return matchMsg;
+            }
+        }
+
+        Message errorMsg = new();
+        errorMsg.MsgId = 3;
+        errorMsg.MsgType = MessageType.Error;
+        errorMsg.Content = "Domain not found";
+
+        return errorMsg;
+    }
+
+    public static bool sendDNSLookupReply(Message msg, EndPoint convertedEndpoint)
+    {
+        byte[] welcomeMessageSize = Encoding.ASCII.GetBytes("WELCOME");
+        int bytessent = socket.SendTo(welcomeMessageSize, convertedEndpoint);
     }
 }
