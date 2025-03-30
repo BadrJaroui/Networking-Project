@@ -35,9 +35,10 @@ class ServerUDP
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
     
     private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
-  private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Loopback, 49153);
+    private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Loopback, 49153);
     private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Any, 49152);
+    // Converts IPEndpoint to Endpoint so that we can use it to receive messages
+    private static EndPoint convertedEndpoint = (EndPoint)ClientEndpoint;
 
     // TODO: [Read the JSON file and return the list of DNSRecords]
     public static List<DNSRecord> ParsedDNS()
@@ -57,25 +58,20 @@ class ServerUDP
         // TODO: [Create a socket and endpoints and bind it to the server IP address and port number]
        
         ServerBinding(socket, ServerEndpoint); 
-
-        // Converts IPEndpoint to Endpoint so that we can use it to receive messages
-        EndPoint convertedEndpoint = (EndPoint)ClientEndpoint;
+        
         // TODO:[Receive and print a received Message from the client]
       
         try   
         { 
             // TODO:[Receive and print Hello]
-            byte[] messagesize = new byte[5];
-            Console.WriteLine("trying to receive message");
-            int receivedbytes = socket.ReceiveFrom(messagesize,ref convertedEndpoint);
-            string convertedmessage =  Encoding.ASCII.GetString(messagesize,0,receivedbytes);
-            Console.WriteLine(convertedmessage);
+            ReceiveMessage();
 
             // TODO:[Send Welcome to the client]
-            byte[] welcomeMessageSize = Encoding.ASCII.GetBytes("WELCOME");
-            Console.WriteLine("Sending data.");
-            int bytessent = socket.SendTo(welcomeMessageSize,convertedEndpoint);    
-            Console.WriteLine($"Sent welcome message to: " + convertedEndpoint);
+            Message welcomeMsg = new();
+            welcomeMsg.MsgId = 1;
+            welcomeMsg.MsgType = MessageType.Welcome;
+            welcomeMsg.Content = "Welcome";
+            SendMessage(welcomeMsg);
 
             // TODO:[Receive and print DNSLookup]
             byte[] DNSMessageSize = new byte[1000];
@@ -111,14 +107,14 @@ class ServerUDP
         Console.WriteLine("connection binded");
     }
 
-    public static Message DNSMatchCheck(string convertedDNSmessage)
+    public static Message DNSMatchCheck(string DNSmessage)
     {
-        Dictionary<string, object> DNSdict = JsonSerializer.Deserialize<Dictionary<string, object>>(convertedDNSmessage);
+        Dictionary<string, object> DNSdict = JsonSerializer.Deserialize<Dictionary<string, object>>(DNSmessage);
         List<DNSRecord> records = ParsedDNS();
         
         foreach (DNSRecord record in records)
         {
-            if (record.Name == DNSdict["content"])
+            if (record.Name == DNSdict["Content"])
             {
                 Message matchMsg = new();
                 matchMsg.MsgId = 2;
@@ -137,9 +133,26 @@ class ServerUDP
         return errorMsg;
     }
 
-    public static bool sendDNSLookupReply(Message msg, EndPoint convertedEndpoint)
+    public static void SendMessage(Message msg)
     {
-        byte[] welcomeMessageSize = Encoding.ASCII.GetBytes("WELCOME");
-        int bytessent = socket.SendTo(welcomeMessageSize, convertedEndpoint);
+        string msgString = ConvertMsgToString(msg);
+        byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
+        int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
+        Console.WriteLine($"Sent {bytesSent} bytes.");
+    }
+
+    public static void ReceiveMessage()
+    {
+        Console.WriteLine("Trying to receive message...");
+        byte[] messageSize = new byte[1000];
+        int receivedMessage = socket.ReceiveFrom(messageSize, ref convertedEndpoint);
+        Dictionary<string, object> convertedMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(receivedMessage);
+        
+        Console.WriteLine(convertedMessage);
+    }
+
+    public static string ConvertMsgToString(Message msg)
+    {
+        return $"MsgId: {msg.MsgId}, MsgType: {msg.MsgType}, Content: {msg.Content}";
     }
 }
