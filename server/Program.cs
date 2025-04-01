@@ -135,7 +135,7 @@ class ServerUDP
 
     public static void SendMessage(Message msg)
     {
-        string msgString = ConvertMsgToString(msg);
+        string msgString = JsonSerializer.Serialize(msg);
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
         int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
         Console.WriteLine($"Sent {bytesSent} bytes.");
@@ -146,11 +146,24 @@ class ServerUDP
         Console.WriteLine("Trying to receive message...");
         byte[] messageSize = new byte[1000];
         int receivedMessage = socket.ReceiveFrom(messageSize, ref convertedEndpoint);
-        Dictionary<string, object> convertedMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(receivedMessage);
         
-        Console.WriteLine(convertedMessage);
+        Dictionary<string, object> dictMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(receivedMessage);
+        Message message = ConvertDictToMsg(dictMessage);
+        string stringMessage = ConvertMsgToString(message);
+        
+        Console.WriteLine(stringMessage);
     }
 
+    public static Message ConvertDictToMsg(Dictionary<string, object> dict)
+    {
+        Message msg = new();
+        msg.MsgId = (int)dict["MsgID"];
+        msg.MsgType = (MessageType)dict["MsgType"];
+        msg.Content = (string)dict["Content"];
+
+        return msg;
+    }
+    
     public static string ConvertMsgToString(Message msg)
     {
         return $"MsgId: {msg.MsgId}, MsgType: {msg.MsgType}, Content: {msg.Content}";
