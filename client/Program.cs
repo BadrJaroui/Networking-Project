@@ -76,6 +76,7 @@ class ClientUDP
         }
        
         //TODO: [Receive and print DNSLookupReply from server]
+        ReceiveMessage();
 
         //TODO: [Send Acknowledgment to Server]
 
@@ -102,31 +103,34 @@ class ClientUDP
         Console.WriteLine($"Sent {bytesSent} bytes.");
     }
     
-    public static void ReceiveMessage()
+    public static Message ReceiveMessage()
     {
         Console.WriteLine("Trying to receive message...");
         byte[] messageSize = new byte[1000];
         int receivedMessage = socket.ReceiveFrom(messageSize, ref convertedEndpoint);
         
-        Dictionary<string, object> dictMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(receivedMessage);
+        string jsonString = Encoding.UTF8.GetString(messageSize, 0, receivedMessage);
+        Dictionary<string, object> dictMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
         Message message = ConvertDictToMsg(dictMessage);
         string stringMessage = ConvertMsgToString(message);
         
         Console.WriteLine("received message: " + stringMessage);
+        return message;
     }
     
     public static Message ConvertDictToMsg(Dictionary<string, object> dict)
     {
         Message msg = new();
-        msg.MsgId = (int)dict["MsgID"];
-        msg.MsgType = (MessageType)dict["MsgType"];
-        msg.Content = (string)dict["Content"];
+        msg.MsgId = ((JsonElement)dict["MsgId"]).GetInt32();
+        msg.MsgType = (MessageType)((JsonElement)dict["MsgType"]).GetInt32();
+        msg.Content = (JsonElement)dict["Content"];
 
         return msg;
     }
     
     public static string ConvertMsgToString(Message msg)
     {
-        return $"MsgId: {msg.MsgId}, MsgType: {msg.MsgType}, Content: {msg.Content}";
+        string msgString = JsonSerializer.Serialize(msg);
+        return msgString;
     }
 }

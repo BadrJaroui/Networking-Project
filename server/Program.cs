@@ -56,13 +56,10 @@ class ServerUDP
     public static void start()
     {
         // TODO: [Create a socket and endpoints and bind it to the server IP address and port number]
-       
         ServerBinding(socket, ServerEndpoint); 
-        
-        // TODO:[Receive and print a received Message from the client]
-      
         try   
         { 
+            // TODO:[Receive and print a received Message from the client]
             // TODO:[Receive and print Hello]
             ReceiveMessage();
 
@@ -74,10 +71,13 @@ class ServerUDP
             SendMessage(welcomeMsg);
 
             // TODO:[Receive and print DNSLookup]
-            byte[] DNSMessageSize = new byte[1000];
-            int receivedDNS = socket.ReceiveFrom(DNSMessageSize, ref convertedEndpoint);
-            string convertedDNSmessage = Encoding.ASCII.GetString(DNSMessageSize,0,receivedDNS);
-            Console.WriteLine(convertedDNSmessage);
+            Message DNSLookup = ReceiveMessage();
+            
+            // TODO:[Query the DNSRecord in Json file]
+            // TODO:[If found Send DNSLookupReply containing the DNSRecord]
+            // TODO:[If not found Send Error]
+            Message DNSLookupCheck = DNSMatchCheck(DNSLookup);
+            SendMessage(DNSLookupCheck);
 
             //door de json file heen zoeken dmv de deserializedDNS
             //Message deserializedDNS = JsonSerializer.Deserialize<Message>(convertedDNSmessage);
@@ -86,13 +86,6 @@ class ServerUDP
         {
             Console.WriteLine("exception: " + ex.Message);
         }
-        
-        // TODO:[Query the DNSRecord in Json file]
-        
-        // TODO:[If found Send DNSLookupReply containing the DNSRecord]
-
-        // TODO:[If not found Send Error]
-
 
         // TODO:[Receive Ack about correct DNSLookupReply from the client]
 
@@ -107,14 +100,13 @@ class ServerUDP
         Console.WriteLine("connection binded");
     }
 
-    public static Message DNSMatchCheck(string DNSmessage)
+    public static Message DNSMatchCheck(Message DNSmessage)
     {
-        Dictionary<string, object> DNSdict = JsonSerializer.Deserialize<Dictionary<string, object>>(DNSmessage);
         List<DNSRecord> records = ParsedDNS();
         
         foreach (DNSRecord record in records)
         {
-            if (record.Name == DNSdict["Content"])
+            if (DNSmessage.Content.ToString().Contains(record.Name))
             {
                 Message matchMsg = new();
                 matchMsg.MsgId = 2;
@@ -141,31 +133,35 @@ class ServerUDP
         Console.WriteLine($"Sent {bytesSent} bytes.");
     }
 
-    public static void ReceiveMessage()
+    public static Message ReceiveMessage()
     {
         Console.WriteLine("Trying to receive message...");
         byte[] messageSize = new byte[1000];
         int receivedMessage = socket.ReceiveFrom(messageSize, ref convertedEndpoint);
         
-        Dictionary<string, object> dictMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(receivedMessage);
+        string jsonString = Encoding.UTF8.GetString(messageSize, 0, receivedMessage);
+        Dictionary<string, object> dictMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
+        
         Message message = ConvertDictToMsg(dictMessage);
         string stringMessage = ConvertMsgToString(message);
         
         Console.WriteLine(stringMessage);
+        return message;
     }
 
     public static Message ConvertDictToMsg(Dictionary<string, object> dict)
     {
         Message msg = new();
-        msg.MsgId = (int)dict["MsgID"];
-        msg.MsgType = (MessageType)dict["MsgType"];
-        msg.Content = (string)dict["Content"];
+        msg.MsgId = ((JsonElement)dict["MsgId"]).GetInt32();
+        msg.MsgType = (MessageType)((JsonElement)dict["MsgType"]).GetInt32();
+        msg.Content = (JsonElement)dict["Content"];
 
         return msg;
     }
     
     public static string ConvertMsgToString(Message msg)
     {
-        return $"MsgId: {msg.MsgId}, MsgType: {msg.MsgType}, Content: {msg.Content}";
+        string msgString = JsonSerializer.Serialize(msg);
+        return msgString;
     }
 }
