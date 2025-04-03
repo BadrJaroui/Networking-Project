@@ -76,8 +76,8 @@ class ServerUDP
             // TODO:[Query the DNSRecord in Json file]
             // TODO:[If found Send DNSLookupReply containing the DNSRecord]
             // TODO:[If not found Send Error]
-            Message DNSLookupCheck = DNSMatchCheck(DNSLookup);
-            SendMessage(DNSLookupCheck);
+            Message DNSlookupReply = CreateDNSLookupReply(DNSLookup);
+            SendMessage(DNSlookupReply);
 
             //door de json file heen zoeken dmv de deserializedDNS
             //Message deserializedDNS = JsonSerializer.Deserialize<Message>(convertedDNSmessage);
@@ -100,29 +100,78 @@ class ServerUDP
         Console.WriteLine("connection binded");
     }
 
-    public static Message DNSMatchCheck(Message DNSmessage)
+    public static List<DNSRecord> DNSMatchCheck(Message DNSmessage)
     {
+        List<DNSRecord> matchingRecords = new() { };
         List<DNSRecord> records = ParsedDNS();
         
         foreach (DNSRecord record in records)
         {
             if (DNSmessage.Content.ToString().Contains(record.Name))
             {
-                Message matchMsg = new();
-                matchMsg.MsgId = 2;
-                matchMsg.MsgType = MessageType.DNSLookupReply;
-                matchMsg.Content = record;
-
-                return matchMsg;
+                matchingRecords.Add(record);
             }
         }
 
-        Message errorMsg = new();
-        errorMsg.MsgId = 3;
-        errorMsg.MsgType = MessageType.Error;
-        errorMsg.Content = "Domain not found";
+        return matchingRecords;
+    }
 
-        return errorMsg;
+    public static DNSRecord FindSuitableDNSRecord(Message DNSmessage)
+    {
+        bool MXflag = false;
+        List<DNSRecord> matchingRecords = DNSMatchCheck(DNSmessage);
+
+        foreach (DNSRecord match in matchingRecords)
+        {
+            if (match.Type == "MX")
+            {
+                MXflag = true;
+                foreach (DNSRecord record in matchingRecords)
+                {
+                    if (record.Type == "A") matchingRecords.Remove(record);
+                }
+            }
+        }
+
+        if (MXflag)
+        {
+            DNSRecord highestPriorityMatch = matchingRecords[0];
+            
+            foreach (DNSRecord match in matchingRecords)
+            {
+                if (match.Priority < highestPriorityMatch.Priority) highestPriorityMatch = match;
+            }
+
+            return highestPriorityMatch;
+        }
+
+        if (!(MXflag))
+        {
+            return matchingRecords[0];
+        }
+
+        return null;
+    }
+
+    public static Message CreateDNSLookupReply(Message DNSMessage)
+    {
+        DNSRecord record = FindSuitableDNSRecord(DNSMessage);
+        Message DNSLookupReply = new();
+
+        if (record is null)
+        {
+            DNSLookupReply.MsgId = 4;
+            DNSLookupReply.MsgType = MessageType.Error;
+            DNSLookupReply.Content = "Domain not found";
+
+            return DNSLookupReply;
+        }
+        
+        DNSLookupReply.MsgId = 5;
+        DNSLookupReply.MsgType = MessageType.DNSLookupReply;
+        DNSLookupReply.Content = record;
+
+        return DNSLookupReply;
     }
 
     public static void SendMessage(Message msg)
@@ -157,6 +206,14 @@ class ServerUDP
         msg.Content = (JsonElement)dict["Content"];
 
         return msg;
+    }
+    
+    public static Dictionary<string, object> ConvertMsgToDict(Message msg)
+    {
+        string serializedMsg = JsonSerializer.Serialize(msg);
+        Dictionary<string, object> msgDict = JsonSerializer.Deserialize<Dictionary<string, object>>(serializedMsg);
+
+        return msgDict;
     }
     
     public static string ConvertMsgToString(Message msg)

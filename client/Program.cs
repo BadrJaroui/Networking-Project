@@ -53,7 +53,7 @@ class ClientUDP
         {
             //TODO: [Create and send HELLO]
             Message msg = new();
-            msg.MsgId = 1;
+            msg.MsgId = 2;
             msg.MsgType = MessageType.Hello;
             msg.Content = "Hello";
 
@@ -64,7 +64,7 @@ class ClientUDP
 
             // TODO: [Create and send DNSLookup Message]
             Message Message1 = new Message ();
-            Message1.MsgId = 1;
+            Message1.MsgId = 3;
             Message1.MsgType = MessageType.DNSLookup;
             Message1.Content = "www.outlook.com";
 
@@ -126,6 +126,14 @@ class ClientUDP
         msg.Content = (JsonElement)dict["Content"];
 
         return msg;
+    }
+
+    public static Dictionary<string, object> ConvertMsgToDict(Message msg)
+    {
+        string serializedMsg = JsonSerializer.Serialize(msg);
+        Dictionary<string, object> msgDict = JsonSerializer.Deserialize<Dictionary<string, object>>(serializedMsg);
+
+        return msgDict;
     }
     
     public static string ConvertMsgToString(Message msg)
