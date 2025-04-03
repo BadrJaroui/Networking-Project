@@ -121,6 +121,10 @@ class ClientUDP
         string jsonString = Encoding.UTF8.GetString(messageSize, 0, receivedMessage);
         Dictionary<string, object> dictMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
         Message message = ConvertDictToMsg(dictMessage);
+        int index = ((JsonElement)dictMessage["MsgType"]).GetInt32();
+        MessageType msgType = (MessageType)index;
+        message.MsgType = msgType;
+        Console.WriteLine("test: " + msgType);
         string stringMessage = ConvertMsgToString(message);
         
         Console.WriteLine("received message: " + stringMessage);
@@ -139,7 +143,8 @@ class ClientUDP
     
     public static string ConvertMsgToString(Message msg)
     {
-        string msgString = JsonSerializer.Serialize(msg);
+        JsonSerializerOptions options = new() {Converters = {new JsonStringEnumConverter()}};
+        string msgString = JsonSerializer.Serialize(msg, options);
         return msgString;
     }
     

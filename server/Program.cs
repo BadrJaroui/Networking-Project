@@ -221,8 +221,7 @@ class ServerUDP
     
     public static string ConvertMsgToString(Message msg)
     {
-        string msgString = JsonSerializer.Serialize(msg);
-        return msgString;
+        return $" {{\"MsgId\":\"{msg.MsgId}\",\"MsgType\":\"{msg.MsgType}\",\"Content\":\"{msg.Content}\"}}";
     }
     
     // Might need this method for working with IDs
