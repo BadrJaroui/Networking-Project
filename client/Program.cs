@@ -54,6 +54,8 @@ class ClientUDP
     private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Parse(setting.ClientIPAddress), setting.ClientPortNumber);
     private static EndPoint convertedEndpoint = (EndPoint)ServerEndpoint;
 
+    public static int acknowledgementIDCounter = 4112;
+
     public static void start()
     {
         SocketCreation(socket, ClientEndpoint);
@@ -64,38 +66,76 @@ class ClientUDP
             msg.MsgId = 2;
             msg.MsgType = MessageType.Hello;
             msg.Content = "Hello";
-
+        
             SendMessage(msg);
             ReceiveMessage();
             
-            Message Message1 = new Message ();
+            Message Message1 = new Message();
             Message1.MsgId = 3;
             Message1.MsgType = MessageType.DNSLookup;
             Message1.Content = "www.outlook.com";
 
             SendMessage(Message1);
-            ReceiveMessage();
+            Message ack = sendAcknowledgmentMessage(ReceiveMessage());
+
+            if (!(ack is null)) SendMessage(ack);
             
-            Message Message2 = new Message ();
-            Message2.MsgId = 6;
+            Message Message2 = new Message();
+            Message2.MsgId = 4;
             Message2.MsgType = MessageType.DNSLookup;
             Message2.Content = "example.com";
 
             SendMessage(Message2);
-            ReceiveMessage();
-            
-            Message Message3 = new Message ();
+            Message ack2 = sendAcknowledgmentMessage(ReceiveMessage());
+
+            if (!(ack2 is null)) SendMessage(ack2);
+
+            Message Message3 = new Message();
             Message3.MsgId = 7;
             Message3.MsgType = MessageType.DNSLookup;
             Message3.Content = "skibidi@gmail.com";
 
             SendMessage(Message3);
-            ReceiveMessage();
+            Message ack3 = sendAcknowledgmentMessage(ReceiveMessage());
+
+            if (!(ack3 is null)) SendMessage(ack3);
+ 
+            Message Message4 = new Message();
+            Message4.MsgId = 8;
+            Message4.MsgType = MessageType.DNSLookup;
+            Message4.Content = "sudeenbadr.com";
+
+            SendMessage(Message4);
+            Message ack4 = sendAcknowledgmentMessage(ReceiveMessage());
+
+            if (!(ack4 is null)) SendMessage(ack4);
+
+            Message endMessage = new Message();
+            endMessage.MsgId = 999;
+            endMessage.MsgType = MessageType.End;
+            endMessage.Content = "No Lookups anymore";
+            SendMessage(endMessage);
+            socket.Close();
         }
         catch (Exception ex)
         {
             Console.WriteLine("exception message:" + ex.Message);
         }
+    }
+    
+    public static Message sendAcknowledgmentMessage(Message msg)
+    {
+        if (msg.MsgType == MessageType.DNSLookupReply)
+        {
+            Message ack = new();
+            ack.MsgId = 2000;
+            ack.MsgType = MessageType.Ack;
+            ack.Content = msg.MsgId;
+
+            return ack;
+        }
+
+        return null;
     }
     
     public static void SocketCreation(Socket socket, IPEndPoint endpoint)
@@ -109,25 +149,26 @@ class ClientUDP
         string msgString = JsonSerializer.Serialize(msg);
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
         int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
-        Console.WriteLine($"Sent {bytesSent} bytes.");
+        Console.WriteLine($"Client sent: {msgString}\n");
     }
     
     public static Message ReceiveMessage()
     {
-        Console.WriteLine("Trying to receive message...");
+        Console.WriteLine("\nTrying to receive message...");
         byte[] messageSize = new byte[1000];
         int receivedMessage = socket.ReceiveFrom(messageSize, ref convertedEndpoint);
         
         string jsonString = Encoding.UTF8.GetString(messageSize, 0, receivedMessage);
         Dictionary<string, object> dictMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
         Message message = ConvertDictToMsg(dictMessage);
+
         int index = ((JsonElement)dictMessage["MsgType"]).GetInt32();
         MessageType msgType = (MessageType)index;
         message.MsgType = msgType;
-        Console.WriteLine("test: " + msgType);
+        //Console.WriteLine("test: " + msgType);
         string stringMessage = ConvertMsgToString(message);
         
-        Console.WriteLine("received message: " + stringMessage);
+        Console.WriteLine("received message: " + stringMessage + "\n");
         return message;
     }
     
