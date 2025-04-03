@@ -50,8 +50,8 @@ class ClientUDP
 
     private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
-    private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Loopback, 49153);
-    private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Any, 49152);
+    private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Parse(setting.ServerIPAddress), setting.ServerPortNumber);
+    private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Parse(setting.ClientIPAddress), setting.ClientPortNumber);
     private static EndPoint convertedEndpoint = (EndPoint)ServerEndpoint;
 
     public static void start()
