@@ -28,6 +28,17 @@ public class Setting
     public string? ClientIPAddress { get; set; }
 }
 
+//TODO: [Create endpoints and socket] DONE
+//TODO: [Create and send HELLO] DONE
+//TODO: [Receive and print Welcome from server] DONE
+//TODO: [Create and send DNSLookup Message] DONE
+//TODO: [Receive and print DNSLookupReply from server] DONE
+//TODO: [Send Acknowledgment to Server]
+// TODO: [Send next DNSLookup to server] DONE
+//TODO: [Receive and print End from server]
+
+//TODO: change IP adds and ports
+
 class ClientUDP
 {
 
@@ -41,63 +52,50 @@ class ClientUDP
 
     private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Loopback, 49153);
     private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Any, 49152);
+    private static EndPoint convertedEndpoint = (EndPoint)ServerEndpoint;
 
     public static void start()
     {
-
-        //TODO: [Create endpoints and socket]
         SocketCreation(socket, ClientEndpoint);
-        EndPoint convertedEndpoint = (EndPoint)ServerEndpoint;
        
         try
         {
-            //TODO: [Create and send HELLO]
+            Message msg = new();
+            msg.MsgId = 2;
+            msg.MsgType = MessageType.Hello;
+            msg.Content = "Hello";
 
-            byte[] hellomaxsize = Encoding.ASCII.GetBytes("HELLO");
-            int hellobytes = socket.SendTo(hellomaxsize,ServerEndpoint);
-            Console.WriteLine($"Sent {hellobytes} bytes to {ServerEndpoint }");
-
-            //
-
-            //TODO: [Receive and print Welcome from server]
-
-            byte[] welcomemaxsize = Encoding.ASCII.GetBytes("WELCOME");
-            int recbytes = socket.ReceiveFrom(welcomemaxsize,ref convertedEndpoint);
-            string convertedmessage =  Encoding.ASCII.GetString(welcomemaxsize,0,recbytes);
-            Console.WriteLine("received message: " + convertedmessage);
-
-            //
-
-            // TODO: [Create and send DNSLookup Message]
-
+            SendMessage(msg);
+            ReceiveMessage();
+            
             Message Message1 = new Message ();
-            Message1.MsgId = 1;
+            Message1.MsgId = 3;
             Message1.MsgType = MessageType.DNSLookup;
             Message1.Content = "www.outlook.com";
-            
-            string  serializeDNS = JsonSerializer.Serialize(Message1);
-            byte[] DNSMessageSize = Encoding.ASCII.GetBytes(serializeDNS);
-            int DNSBytesSent = socket.SendTo(DNSMessageSize, ServerEndpoint);
-            Console.WriteLine($"Sent {DNSBytesSent} to {ServerEndpoint }");
 
-            //
+            SendMessage(Message1);
+            ReceiveMessage();
+            
+            Message Message2 = new Message ();
+            Message2.MsgId = 6;
+            Message2.MsgType = MessageType.DNSLookup;
+            Message2.Content = "example.com";
+
+            SendMessage(Message2);
+            ReceiveMessage();
+            
+            Message Message3 = new Message ();
+            Message3.MsgId = 7;
+            Message3.MsgType = MessageType.DNSLookup;
+            Message3.Content = "skibidi@gmail.com";
+
+            SendMessage(Message3);
+            ReceiveMessage();
         }
         catch (Exception ex)
         {
             Console.WriteLine("exception message:" + ex.Message);
         }
-       
-        //TODO: [Receive and print DNSLookupReply from server]
-
-        //TODO: [Send Acknowledgment to Server]
-
-        // TODO: [Send next DNSLookup to server]
-
-        // repeat the process until all DNSLoopkups (correct and incorrect onces) are sent to server and the replies with DNSLookupReply
-
-        //TODO: [Receive and print End from server]
-
-
     }
     
     public static void SocketCreation(Socket socket, IPEndPoint endpoint)
@@ -106,5 +104,51 @@ class ClientUDP
         Console.WriteLine("Connection started.");
     }
     
+    public static void SendMessage(Message msg)
+    {
+        string msgString = JsonSerializer.Serialize(msg);
+        byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
+        int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
+        Console.WriteLine($"Sent {bytesSent} bytes.");
+    }
     
+    public static Message ReceiveMessage()
+    {
+        Console.WriteLine("Trying to receive message...");
+        byte[] messageSize = new byte[1000];
+        int receivedMessage = socket.ReceiveFrom(messageSize, ref convertedEndpoint);
+        
+        string jsonString = Encoding.UTF8.GetString(messageSize, 0, receivedMessage);
+        Dictionary<string, object> dictMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
+        Message message = ConvertDictToMsg(dictMessage);
+        string stringMessage = ConvertMsgToString(message);
+        
+        Console.WriteLine("received message: " + stringMessage);
+        return message;
+    }
+    
+    public static Message ConvertDictToMsg(Dictionary<string, object> dict)
+    {
+        Message msg = new();
+        msg.MsgId = ((JsonElement)dict["MsgId"]).GetInt32();
+        msg.MsgType = (MessageType)((JsonElement)dict["MsgType"]).GetInt32();
+        msg.Content = (JsonElement)dict["Content"];
+
+        return msg;
+    }
+    
+    public static string ConvertMsgToString(Message msg)
+    {
+        string msgString = JsonSerializer.Serialize(msg);
+        return msgString;
+    }
+    
+    // Might need this method for working with IDs
+    public static Dictionary<string, object> ConvertMsgToDict(Message msg)
+    {
+        string serializedMsg = JsonSerializer.Serialize(msg);
+        Dictionary<string, object> msgDict = JsonSerializer.Deserialize<Dictionary<string, object>>(serializedMsg);
+
+        return msgDict;
+    }
 }
