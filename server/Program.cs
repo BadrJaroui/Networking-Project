@@ -29,31 +29,19 @@ public class Setting
     public string? ClientIPAddress { get; set; }
 }
 
-// TODO: [Read the JSON file and return the list of DNSRecords] DONE
-// TODO: [Create a socket and endpoints and bind it to the server IP address and port number] DONE
-// TODO:[Receive and print a received Message from the client] DONE
-// TODO:[Receive and print Hello] DONE
-// TODO:[Send Welcome to the client] DONE
-// TODO:[Receive and print DNSLookup] DONE
-// TODO:[Query the DNSRecord in Json file] DONE
-// TODO:[If found Send DNSLookupReply containing the DNSRecord] DONE
-// TODO:[If not found Send Error] DONE
-// TODO:[Receive Ack about correct DNSLookupReply from the client] DONE
-// TODO:[If no further requests received send End to the client]
-
 class ServerUDP
 {
     static string configFile = @"../../../../Setting.json";
     static string configContent = File.ReadAllText(configFile);
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
-    
     private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
     private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Parse(setting.ServerIPAddress), setting.ServerPortNumber);
     private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Parse(setting.ClientIPAddress), setting.ClientPortNumber);
+
     // Converts IPEndpoint to Endpoint so that we can use it to receive messages
     private static EndPoint convertedEndpoint = (EndPoint)ClientEndpoint;
     
-    public static List<DNSRecord> ParsedDNS()
+    private static List<DNSRecord> ParsedDNS()
     {
         List<DNSRecord> records = new();
         using (StreamReader rdr = new("../../../DNSrecords.json"))
@@ -79,8 +67,6 @@ class ServerUDP
             welcomeMsg.Content = "Welcome";
             SendMessage(welcomeMsg);
             
-            
-            // Test searching an A-type record
             Message DNSLookup = ReceiveMessage();
             Message DNSlookupReply = CreateDNSLookupReply(DNSLookup);
             SendMessage(DNSlookupReply);
@@ -91,8 +77,7 @@ class ServerUDP
             {
                 SendMessage(lookupOrAck);
             }
-            
-            // Test searching a non-existent record
+
             Message DNSLookup2 = ReceiveMessage();
             Message DNSlookupReply2 = CreateDNSLookupReply(DNSLookup2);
             SendMessage(DNSlookupReply2);
@@ -103,10 +88,7 @@ class ServerUDP
             {
                 SendMessage(lookupOrAck2);
             }
-            
-            // Searches MX and A-type records and returns record with most priority
-            // (MX-type with higher priority > MX-type with lower priority > A-type)
-
+    
             Message DNSLookup3 = ReceiveMessage();
             Message DNSlookupReply3 = CreateDNSLookupReply(DNSLookup3);
             SendMessage(DNSlookupReply3);
@@ -117,7 +99,6 @@ class ServerUDP
             {
                 SendMessage(lookupOrAck3);
             }
-
 
             Message DNSLookup4 = ReceiveMessage();
             Message DNSlookupReply4 = CreateDNSLookupReply(DNSLookup4);
@@ -131,7 +112,6 @@ class ServerUDP
             }
 
         }
-
         
         catch (Exception ex)
         {
@@ -139,7 +119,7 @@ class ServerUDP
         }
     }
     
-    public static bool AcknowledgmentorNot(Message lookupOrAck)
+    private static bool AcknowledgmentorNot(Message lookupOrAck)
     {
         if (lookupOrAck.MsgType == MessageType.Ack)
         {
@@ -153,13 +133,13 @@ class ServerUDP
         return false;
     }
 
-    public static void ServerBinding(Socket socket, IPEndPoint endpoint)
+    private static void ServerBinding(Socket socket, IPEndPoint endpoint)
     {
         socket.Bind(endpoint);
         Console.WriteLine("connection binded");
     }
     
-    public static void SendMessage(Message msg)
+    private static void SendMessage(Message msg)
     {
         string msgString = JsonSerializer.Serialize(msg);
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
@@ -167,9 +147,7 @@ class ServerUDP
         Console.WriteLine($"Server sent: {msgString} \n");
     }
 
-
-
-    public static Message ReceiveMessage()
+    private static Message ReceiveMessage()
     {
         Console.WriteLine("\nTrying to receive message...");
         byte[] messageSize = new byte[1000];
@@ -185,8 +163,8 @@ class ServerUDP
         return message;
     }
     
-    public static bool recordNotFound = false; 
-    public static Message CreateDNSLookupReply(Message DNSMessage)
+    private static bool recordNotFound = false; 
+    private static Message CreateDNSLookupReply(Message DNSMessage)
     {
         DNSRecord record = FindCorrectDNSRecord(DNSMessage);
         Message DNSLookupReply = new();
@@ -207,7 +185,7 @@ class ServerUDP
         return DNSLookupReply;
     }
 
-    public static DNSRecord? FindCorrectDNSRecord(Message DNSmessage)
+    private static DNSRecord? FindCorrectDNSRecord(Message DNSmessage)
     {
         bool MXflag = false;
         List<DNSRecord>? matchingRecords = DNSMatchCheck(DNSmessage);
@@ -250,8 +228,8 @@ class ServerUDP
 
         return null;
     }
-    
-    public static List<DNSRecord> DNSMatchCheck(Message DNSmessage)
+
+    private static List<DNSRecord> DNSMatchCheck(Message DNSmessage)
     {
         List<DNSRecord> matchingRecords = new() { };
         List<DNSRecord> records = ParsedDNS();
@@ -267,7 +245,7 @@ class ServerUDP
         return matchingRecords;
     }
 
-    public static Message ConvertDictToMsg(Dictionary<string, object> dict)
+    private static Message ConvertDictToMsg(Dictionary<string, object> dict)
     {
         Message msg = new();
         msg.MsgId = ((JsonElement)dict["MsgId"]).GetInt32();
@@ -276,18 +254,9 @@ class ServerUDP
 
         return msg;
     }
-    
-    public static string ConvertMsgToString(Message msg)
+
+    private static string ConvertMsgToString(Message msg)
     {
         return $" {{\"MsgId\":\"{msg.MsgId}\",\"MsgType\":\"{msg.MsgType}\",\"Content\":\"{msg.Content}\"}}";
-    }
-    
-    // Might need this method for working with IDs
-    public static Dictionary<string, object> ConvertMsgToDict(Message msg)
-    {
-        string serializedMsg = JsonSerializer.Serialize(msg);
-        Dictionary<string, object> msgDict = JsonSerializer.Deserialize<Dictionary<string, object>>(serializedMsg);
-
-        return msgDict;
     }
 }

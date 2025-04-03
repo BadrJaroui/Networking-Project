@@ -10,8 +10,6 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using LibData;
 
-// SendTo();
-// Locally ran port and IP for testing
 class Program
 {
     static void Main(string[] args)
@@ -27,34 +25,17 @@ public class Setting
     public int ClientPortNumber { get; set; }
     public string? ClientIPAddress { get; set; }
 }
-
-//TODO: [Create endpoints and socket] DONE
-//TODO: [Create and send HELLO] DONE
-//TODO: [Receive and print Welcome from server] DONE
-//TODO: [Create and send DNSLookup Message] DONE
-//TODO: [Receive and print DNSLookupReply from server] DONE
-//TODO: [Send Acknowledgment to Server]
-// TODO: [Send next DNSLookup to server] DONE
-//TODO: [Receive and print End from server]
-
-//TODO: change IP adds and ports
-
 class ClientUDP
 {
-
-    //TODO: [Deserialize Setting.json]
     static string configFile = @"../../../../Setting.json";
     static string configContent = File.ReadAllText(configFile);
     static Setting? setting = JsonSerializer.Deserialize<Setting>(configContent);
-
-
     private static Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
     private static IPEndPoint ServerEndpoint = new IPEndPoint(IPAddress.Parse(setting.ServerIPAddress), setting.ServerPortNumber);
     private static IPEndPoint ClientEndpoint = new IPEndPoint(IPAddress.Parse(setting.ClientIPAddress), setting.ClientPortNumber);
     private static EndPoint convertedEndpoint = (EndPoint)ServerEndpoint;
 
-    public static int acknowledgementIDCounter = 4112;
+    private static int acknowledgementIDCounter = 4112;
 
     public static void start()
     {
@@ -123,12 +104,12 @@ class ClientUDP
         }
     }
     
-    public static Message sendAcknowledgmentMessage(Message msg)
+    private static Message sendAcknowledgmentMessage(Message msg)
     {
         if (msg.MsgType == MessageType.DNSLookupReply)
         {
             Message ack = new();
-            ack.MsgId = 2000;
+            ack.MsgId = acknowledgementIDCounter++;
             ack.MsgType = MessageType.Ack;
             ack.Content = msg.MsgId;
 
@@ -138,13 +119,13 @@ class ClientUDP
         return null;
     }
     
-    public static void SocketCreation(Socket socket, IPEndPoint endpoint)
+    private static void SocketCreation(Socket socket, IPEndPoint endpoint)
     {
         socket.Bind(endpoint);
         Console.WriteLine("Connection started.");
     }
     
-    public static void SendMessage(Message msg)
+    private static void SendMessage(Message msg)
     {
         string msgString = JsonSerializer.Serialize(msg);
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
@@ -152,9 +133,10 @@ class ClientUDP
         Console.WriteLine($"Client sent: {msgString}\n");
     }
     
-    public static Message ReceiveMessage()
+    private static Message ReceiveMessage()
     {
         Console.WriteLine("\nTrying to receive message...");
+
         byte[] messageSize = new byte[1000];
         int receivedMessage = socket.ReceiveFrom(messageSize, ref convertedEndpoint);
         
@@ -165,14 +147,14 @@ class ClientUDP
         int index = ((JsonElement)dictMessage["MsgType"]).GetInt32();
         MessageType msgType = (MessageType)index;
         message.MsgType = msgType;
-        //Console.WriteLine("test: " + msgType);
+
         string stringMessage = ConvertMsgToString(message);
         
         Console.WriteLine("received message: " + stringMessage + "\n");
         return message;
     }
     
-    public static Message ConvertDictToMsg(Dictionary<string, object> dict)
+    private static Message ConvertDictToMsg(Dictionary<string, object> dict)
     {
         Message msg = new();
         msg.MsgId = ((JsonElement)dict["MsgId"]).GetInt32();
@@ -182,19 +164,10 @@ class ClientUDP
         return msg;
     }
     
-    public static string ConvertMsgToString(Message msg)
+    private static string ConvertMsgToString(Message msg)
     {
         JsonSerializerOptions options = new() {Converters = {new JsonStringEnumConverter()}};
         string msgString = JsonSerializer.Serialize(msg, options);
         return msgString;
-    }
-    
-    // Might need this method for working with IDs
-    public static Dictionary<string, object> ConvertMsgToDict(Message msg)
-    {
-        string serializedMsg = JsonSerializer.Serialize(msg);
-        Dictionary<string, object> msgDict = JsonSerializer.Deserialize<Dictionary<string, object>>(serializedMsg);
-
-        return msgDict;
     }
 }
