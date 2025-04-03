@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -9,6 +10,7 @@ using System.Text;
 using System.Text.Json;
 
 using LibData;
+using Microsoft.VisualBasic;
 
 // ReceiveFrom();
 class Program
@@ -77,21 +79,41 @@ class ServerUDP
             welcomeMsg.Content = "Welcome";
             SendMessage(welcomeMsg);
             
+            
             // Test searching an A-type record
             Message DNSLookup = ReceiveMessage();
             Message DNSlookupReply = CreateDNSLookupReply(DNSLookup);
-            SendMessage(DNSlookupReply);
+            //SendMessage(DNSlookupReply);
+            AcknowledgmentorNot(DNSLookup,DNSlookupReply);
 
             // Searches MX and A-type records and returns record with most priority
             // (MX-type with higher priority > MX-type with lower priority > A-type)
             Message DNSLookup2 = ReceiveMessage();
             Message DNSlookupReply2 = CreateDNSLookupReply(DNSLookup2);
-            SendMessage(DNSlookupReply2);
+            //SendMessage(DNSlookupReply2);
+            AcknowledgmentorNot(DNSLookup2,DNSlookupReply2);
             
             // Test searching a non-existent record
             Message DNSLookup3 = ReceiveMessage();
             Message DNSlookupReply3 = CreateDNSLookupReply(DNSLookup3);
-            SendMessage(DNSlookupReply3);
+            //SendMessage(DNSlookupReply3);
+            AcknowledgmentorNot(DNSLookup3,DNSlookupReply3);
+
+            Message DNSLookup4 = ReceiveMessage();
+            Message DNSlookupReply4 = CreateDNSLookupReply(DNSLookup4);
+            //SendMessage(DNSlookupReply4);
+            AcknowledgmentorNot(DNSLookup4,DNSlookupReply4);
+            
+            Message DNSLookup5 = ReceiveMessage();
+            Message DNSlookupReply5 = CreateDNSLookupReply(DNSLookup5);
+            //SendMessage(DNSlookupReply4);
+            AcknowledgmentorNot(DNSLookup5,DNSlookupReply5);
+
+
+        
+
+   
+
         }
         
         catch (Exception ex)
@@ -111,12 +133,14 @@ class ServerUDP
         string msgString = JsonSerializer.Serialize(msg);
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
         int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
-        Console.WriteLine($"Sent {bytesSent} bytes.");
+        Console.WriteLine($"Server sent: {msgString} \n");
     }
+
+
 
     public static Message ReceiveMessage()
     {
-        Console.WriteLine("Trying to receive message...");
+        Console.WriteLine("\nTrying to receive message...");
         byte[] messageSize = new byte[1000];
         int receivedMessage = socket.ReceiveFrom(messageSize, ref convertedEndpoint);
         
@@ -126,25 +150,26 @@ class ServerUDP
         Message message = ConvertDictToMsg(dictMessage);
         string stringMessage = ConvertMsgToString(message);
         
-        Console.WriteLine(stringMessage);
+        Console.WriteLine("received message: " + stringMessage + "\n");
         return message;
     }
     
+    public static bool recordNotFound = false; 
     public static Message CreateDNSLookupReply(Message DNSMessage)
     {
-        DNSRecord? record = FindCorrectDNSRecord(DNSMessage);
+        DNSRecord record = FindCorrectDNSRecord(DNSMessage);
         Message DNSLookupReply = new();
 
         if (record is null)
         {
-            DNSLookupReply.MsgId = 4;
+            DNSLookupReply.MsgId = 7534445;
             DNSLookupReply.MsgType = MessageType.Error;
             DNSLookupReply.Content = "Domain not found";
-
+            recordNotFound = true;
             return DNSLookupReply;
         }
-        
-        DNSLookupReply.MsgId = 5;
+        recordNotFound = false;
+        DNSLookupReply.MsgId = DNSMessage.MsgId;
         DNSLookupReply.MsgType = MessageType.DNSLookupReply;
         DNSLookupReply.Content = record;
 
@@ -187,6 +212,8 @@ class ServerUDP
         // If there's only A-type record matches, returns the first record in list
         if (!(MXflag))
         {
+       
+            var matchingrecord = matchingRecords[0];
             return matchingRecords[0];
         }
 
@@ -231,5 +258,16 @@ class ServerUDP
         Dictionary<string, object> msgDict = JsonSerializer.Deserialize<Dictionary<string, object>>(serializedMsg);
 
         return msgDict;
+    }
+    public static void AcknowledgmentorNot(Message dnsLookup, Message dnsReply)
+    {
+        if (dnsLookup.MsgType != MessageType.Ack)
+        {
+            SendMessage(dnsReply);
+        }
+        else
+        {
+            Console.WriteLine("Acknowledgement received: " + dnsLookup);
+        }
     }
 }
