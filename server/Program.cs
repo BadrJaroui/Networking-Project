@@ -107,16 +107,31 @@ class ServerUDP
             // Searches MX and A-type records and returns record with most priority
             // (MX-type with higher priority > MX-type with lower priority > A-type)
 
-            //Message DNSLookup4 = ReceiveMessage();
-            //Message DNSlookupReply4 = CreateDNSLookupReply(DNSLookup4);
-            //SendMessage(DNSlookupReply4);
-            //AcknowledgmentorNot(DNSLookup4,DNSlookupReply4);
+            Message DNSLookup3 = ReceiveMessage();
+            Message DNSlookupReply3 = CreateDNSLookupReply(DNSLookup3);
+            SendMessage(DNSlookupReply3);
+            Message lookupOrAck3 = ReceiveMessage();
+            bool checkAck3 = AcknowledgmentorNot(lookupOrAck3);
 
-            //Message DNSLookup5 = ReceiveMessage();
-            //Message DNSlookupReply5 = CreateDNSLookupReply(DNSLookup5);
-            //SendMessage(DNSlookupReply4);
-            //AcknowledgmentorNot(DNSLookup5,DNSlookupReply5);
+            if (!checkAck3)
+            {
+                SendMessage(lookupOrAck3);
+            }
+
+
+            Message DNSLookup4 = ReceiveMessage();
+            Message DNSlookupReply4 = CreateDNSLookupReply(DNSLookup4);
+            SendMessage(DNSlookupReply4);
+            Message lookupOrAck4 = ReceiveMessage();
+            bool checkAck4 = AcknowledgmentorNot(lookupOrAck4);
+
+            if (!checkAck4)
+            {
+                SendMessage(lookupOrAck4);
+            }
+
         }
+
         
         catch (Exception ex)
         {
@@ -131,7 +146,10 @@ class ServerUDP
             Console.WriteLine("Acknowledgement received: " + ConvertMsgToString(lookupOrAck));
             return true;
         }
-
+        if (lookupOrAck.MsgType == MessageType.End)
+        {
+            Console.WriteLine("client disconnected");
+        }
         return false;
     }
 

@@ -81,7 +81,7 @@ class ClientUDP
             if (!(ack is null)) SendMessage(ack);
             
             Message Message2 = new Message();
-            Message2.MsgId = 3;
+            Message2.MsgId = 4;
             Message2.MsgType = MessageType.DNSLookup;
             Message2.Content = "example.com";
 
@@ -90,22 +90,32 @@ class ClientUDP
 
             if (!(ack2 is null)) SendMessage(ack2);
 
-            //Message Message3 = new Message();
-            //Message3.MsgId = 7;
-            //Message3.MsgType = MessageType.DNSLookup;
-            //Message3.Content = "skibidi@gmail.com";
+            Message Message3 = new Message();
+            Message3.MsgId = 7;
+            Message3.MsgType = MessageType.DNSLookup;
+            Message3.Content = "skibidi@gmail.com";
 
-            //SendMessage(Message3);
-            //sendAcknowledgmentMessage(ReceiveMessage());
+            SendMessage(Message3);
+            Message ack3 = sendAcknowledgmentMessage(ReceiveMessage());
 
+            if (!(ack3 is null)) SendMessage(ack3);
+ 
+            Message Message4 = new Message();
+            Message4.MsgId = 8;
+            Message4.MsgType = MessageType.DNSLookup;
+            Message4.Content = "sudeenbadr.com";
 
-            //Message Message4 = new Message();
-            //Message4.MsgId = 8;
-            //Message4.MsgType = MessageType.DNSLookup;
-            //Message4.Content = "sudeenbadr.com";
+            SendMessage(Message4);
+            Message ack4 = sendAcknowledgmentMessage(ReceiveMessage());
 
-            //SendMessage(Message4);
-            //sendAcknowledgmentMessage(ReceiveMessage());
+            if (!(ack4 is null)) SendMessage(ack4);
+
+            Message endMessage = new Message();
+            endMessage.MsgId = 999;
+            endMessage.MsgType = MessageType.End;
+            endMessage.Content = "No Lookups anymore";
+            SendMessage(endMessage);
+            socket.Close();
         }
         catch (Exception ex)
         {
