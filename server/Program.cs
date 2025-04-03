@@ -85,6 +85,7 @@ class ServerUDP
             Message DNSlookupReply = CreateDNSLookupReply(DNSLookup);
             //SendMessage(DNSlookupReply);
             AcknowledgmentorNot(DNSLookup,DNSlookupReply);
+           
 
             // Searches MX and A-type records and returns record with most priority
             // (MX-type with higher priority > MX-type with lower priority > A-type)
@@ -93,7 +94,7 @@ class ServerUDP
             //SendMessage(DNSlookupReply2);
             AcknowledgmentorNot(DNSLookup2,DNSlookupReply2);
             
-            // Test searching a non-existent record
+            // // Test searching a non-existent record
             Message DNSLookup3 = ReceiveMessage();
             Message DNSlookupReply3 = CreateDNSLookupReply(DNSLookup3);
             //SendMessage(DNSlookupReply3);
@@ -108,12 +109,6 @@ class ServerUDP
             Message DNSlookupReply5 = CreateDNSLookupReply(DNSLookup5);
             //SendMessage(DNSlookupReply4);
             AcknowledgmentorNot(DNSLookup5,DNSlookupReply5);
-
-
-        
-
-   
-
         }
         
         catch (Exception ex)
@@ -261,11 +256,12 @@ class ServerUDP
     }
     public static void AcknowledgmentorNot(Message dnsLookup, Message dnsReply)
     {
-        if (dnsLookup.MsgType != MessageType.Ack)
+        if (dnsLookup.MsgType == MessageType.DNSLookup)
         {
             SendMessage(dnsReply);
+            ReceiveMessage();
         }
-        else
+        else if (dnsLookup.MsgType == MessageType.Ack)
         {
             Console.WriteLine("Acknowledgement received: " + dnsLookup);
         }

@@ -76,36 +76,25 @@ class ClientUDP
             Message1.Content = "www.outlook.com";
 
             SendMessage(Message1);
-            ReceiveMessage();
             sendAcknowledgmentMessage(ReceiveMessage());
-            
-            
-            
-          
-            // Message acknowledgement1 = new Message();
-            // acknowledgement1.MsgId = 4112;
-            // acknowledgement1.MsgType = MessageType.Ack;
-            // acknowledgement1.Content = 4112;
-            // Console.WriteLine($"Sending acknowledgement of msgID : {acknowledgement1.MsgId}");
-            // SendMessage(acknowledgement1);
-           
+
+      
                       
             Message Message2 = new Message();
             Message2.MsgId = 6;
             Message2.MsgType = MessageType.DNSLookup;
             Message2.Content = "example.com";
-
             SendMessage(Message2);
-            ReceiveMessage();
-             //sendAcknowledgmentMessage(ReceiveMessage());
-            
+            sendAcknowledgmentMessage(ReceiveMessage());
+             
             Message Message3 = new Message();
             Message3.MsgId = 7;
             Message3.MsgType = MessageType.DNSLookup;
             Message3.Content = "skibidi@gmail.com";
 
             SendMessage(Message3);
-            ReceiveMessage();
+            sendAcknowledgmentMessage(ReceiveMessage());
+          
 
             Message Message4 = new Message();
             Message4.MsgId = 8;
@@ -113,17 +102,10 @@ class ClientUDP
             Message4.Content = "sudeenbadr.com";
             
             SendMessage(Message4);
-            ReceiveMessage();
-            if (ReceiveMessage().Content.Equals("Domain not found"))
-           {
-                Message acknowledgement1 = new Message();
-                acknowledgement1.MsgId = 4113;
-                acknowledgement1.MsgType = MessageType.Ack;
-                acknowledgement1.Content = 4113;
-                SendMessage(acknowledgement1);
-                Console.WriteLine($"Sending acknowledgement of msgID : {acknowledgement1.MsgId}");
-           }
-            //sendAcknowledgmentMessage(ReceiveMessage());
+            sendAcknowledgmentMessage(ReceiveMessage());
+            
+           
+         
 
         }
         catch (Exception ex)
@@ -196,13 +178,20 @@ class ClientUDP
 
     public static void sendAcknowledgmentMessage(Message msg)
     {
-        
+        if (msg.MsgType == MessageType.DNSLookupReply)
+        {
             Message acknowledgement1 = new Message();
             acknowledgement1.MsgId = 4112;
             acknowledgement1.MsgType = MessageType.Ack;
-            acknowledgement1.Content = 4112;
+            acknowledgement1.Content = msg.MsgId;
             SendMessage(acknowledgement1);
             Console.WriteLine($"Sending acknowledgement of msgID : {acknowledgement1.MsgId}");
+        }
+        else
+        {
+            Console.WriteLine("could not send an acknowledgement");
+        }
+            
         
     }
 }
