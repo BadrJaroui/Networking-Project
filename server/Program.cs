@@ -30,7 +30,7 @@ public class Setting
 }
 
 // TODO: [Read the JSON file and return the list of DNSRecords] DONE
-// TODO: [Create a socket and endpoints and bind it to the server IP address and port number] (TODO: CHANGE IP ADD AND PORT TO SETTING.JSON)
+// TODO: [Create a socket and endpoints and bind it to the server IP address and port number] DONE
 // TODO:[Receive and print a received Message from the client] DONE
 // TODO:[Receive and print Hello] DONE
 // TODO:[Send Welcome to the client] DONE
@@ -38,8 +38,8 @@ public class Setting
 // TODO:[Query the DNSRecord in Json file] DONE
 // TODO:[If found Send DNSLookupReply containing the DNSRecord] DONE
 // TODO:[If not found Send Error] DONE
-// TODO:[Receive Ack about correct DNSLookupReply from the client]
-// TODO:[If no further requests receieved send End to the client]
+// TODO:[Receive Ack about correct DNSLookupReply from the client] DONE
+// TODO:[If no further requests received send End to the client]
 
 class ServerUDP
 {
@@ -83,38 +83,56 @@ class ServerUDP
             // Test searching an A-type record
             Message DNSLookup = ReceiveMessage();
             Message DNSlookupReply = CreateDNSLookupReply(DNSLookup);
-            //SendMessage(DNSlookupReply);
-            AcknowledgmentorNot(DNSLookup,DNSlookupReply);
-           
+            SendMessage(DNSlookupReply);
+            Message lookupOrAck = ReceiveMessage();
+            bool checkAck1 = AcknowledgmentorNot(lookupOrAck);
 
-            // Searches MX and A-type records and returns record with most priority
-            // (MX-type with higher priority > MX-type with lower priority > A-type)
+            if (!checkAck1)
+            {
+                SendMessage(lookupOrAck);
+            }
+            
+            // Test searching a non-existent record
             Message DNSLookup2 = ReceiveMessage();
             Message DNSlookupReply2 = CreateDNSLookupReply(DNSLookup2);
-            //SendMessage(DNSlookupReply2);
-            AcknowledgmentorNot(DNSLookup2,DNSlookupReply2);
-            
-            // // Test searching a non-existent record
-            Message DNSLookup3 = ReceiveMessage();
-            Message DNSlookupReply3 = CreateDNSLookupReply(DNSLookup3);
-            //SendMessage(DNSlookupReply3);
-            AcknowledgmentorNot(DNSLookup3,DNSlookupReply3);
+            SendMessage(DNSlookupReply2);
+            Message lookupOrAck2 = ReceiveMessage();
+            bool checkAck2 = AcknowledgmentorNot(lookupOrAck2);
 
-            Message DNSLookup4 = ReceiveMessage();
-            Message DNSlookupReply4 = CreateDNSLookupReply(DNSLookup4);
-            //SendMessage(DNSlookupReply4);
-            AcknowledgmentorNot(DNSLookup4,DNSlookupReply4);
+            if (!checkAck2)
+            {
+                SendMessage(lookupOrAck2);
+            }
             
-            Message DNSLookup5 = ReceiveMessage();
-            Message DNSlookupReply5 = CreateDNSLookupReply(DNSLookup5);
+            // Searches MX and A-type records and returns record with most priority
+            // (MX-type with higher priority > MX-type with lower priority > A-type)
+
+            //Message DNSLookup4 = ReceiveMessage();
+            //Message DNSlookupReply4 = CreateDNSLookupReply(DNSLookup4);
             //SendMessage(DNSlookupReply4);
-            AcknowledgmentorNot(DNSLookup5,DNSlookupReply5);
+            //AcknowledgmentorNot(DNSLookup4,DNSlookupReply4);
+
+            //Message DNSLookup5 = ReceiveMessage();
+            //Message DNSlookupReply5 = CreateDNSLookupReply(DNSLookup5);
+            //SendMessage(DNSlookupReply4);
+            //AcknowledgmentorNot(DNSLookup5,DNSlookupReply5);
         }
         
         catch (Exception ex)
         {
             Console.WriteLine("exception: " + ex.Message);
         }
+    }
+    
+    public static bool AcknowledgmentorNot(Message lookupOrAck)
+    {
+        if (lookupOrAck.MsgType == MessageType.Ack)
+        {
+            Console.WriteLine("Acknowledgement received: " + ConvertMsgToString(lookupOrAck));
+            return true;
+        }
+
+        return false;
     }
 
     public static void ServerBinding(Socket socket, IPEndPoint endpoint)
@@ -253,17 +271,5 @@ class ServerUDP
         Dictionary<string, object> msgDict = JsonSerializer.Deserialize<Dictionary<string, object>>(serializedMsg);
 
         return msgDict;
-    }
-    public static void AcknowledgmentorNot(Message dnsLookup, Message dnsReply)
-    {
-        if (dnsLookup.MsgType == MessageType.DNSLookup)
-        {
-            SendMessage(dnsReply);
-            ReceiveMessage();
-        }
-        else if (dnsLookup.MsgType == MessageType.Ack)
-        {
-            Console.WriteLine("Acknowledgement received: " + dnsLookup);
-        }
     }
 }

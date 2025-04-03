@@ -76,42 +76,56 @@ class ClientUDP
             Message1.Content = "www.outlook.com";
 
             SendMessage(Message1);
-            sendAcknowledgmentMessage(ReceiveMessage());
+            Message ack = sendAcknowledgmentMessage(ReceiveMessage());
 
-      
-                      
+            if (!(ack is null)) SendMessage(ack);
+            
             Message Message2 = new Message();
-            Message2.MsgId = 6;
+            Message2.MsgId = 3;
             Message2.MsgType = MessageType.DNSLookup;
             Message2.Content = "example.com";
+
             SendMessage(Message2);
-            sendAcknowledgmentMessage(ReceiveMessage());
-             
-            Message Message3 = new Message();
-            Message3.MsgId = 7;
-            Message3.MsgType = MessageType.DNSLookup;
-            Message3.Content = "skibidi@gmail.com";
+            Message ack2 = sendAcknowledgmentMessage(ReceiveMessage());
 
-            SendMessage(Message3);
-            sendAcknowledgmentMessage(ReceiveMessage());
-          
+            if (!(ack2 is null)) SendMessage(ack2);
 
-            Message Message4 = new Message();
-            Message4.MsgId = 8;
-            Message4.MsgType = MessageType.DNSLookup;
-            Message4.Content = "sudeenbadr.com";
-            
-            SendMessage(Message4);
-            sendAcknowledgmentMessage(ReceiveMessage());
-            
-           
-         
+            //Message Message3 = new Message();
+            //Message3.MsgId = 7;
+            //Message3.MsgType = MessageType.DNSLookup;
+            //Message3.Content = "skibidi@gmail.com";
 
+            //SendMessage(Message3);
+            //sendAcknowledgmentMessage(ReceiveMessage());
+
+
+            //Message Message4 = new Message();
+            //Message4.MsgId = 8;
+            //Message4.MsgType = MessageType.DNSLookup;
+            //Message4.Content = "sudeenbadr.com";
+
+            //SendMessage(Message4);
+            //sendAcknowledgmentMessage(ReceiveMessage());
         }
         catch (Exception ex)
         {
             Console.WriteLine("exception message:" + ex.Message);
         }
+    }
+    
+    public static Message sendAcknowledgmentMessage(Message msg)
+    {
+        if (msg.MsgType == MessageType.DNSLookupReply)
+        {
+            Message ack = new();
+            ack.MsgId = 2000;
+            ack.MsgType = MessageType.Ack;
+            ack.Content = msg.MsgId;
+
+            return ack;
+        }
+
+        return null;
     }
     
     public static void SocketCreation(Socket socket, IPEndPoint endpoint)
@@ -172,26 +186,5 @@ class ClientUDP
         Dictionary<string, object> msgDict = JsonSerializer.Deserialize<Dictionary<string, object>>(serializedMsg);
 
         return msgDict;
-    }
-
-
-
-    public static void sendAcknowledgmentMessage(Message msg)
-    {
-        if (msg.MsgType == MessageType.DNSLookupReply)
-        {
-            Message acknowledgement1 = new Message();
-            acknowledgement1.MsgId = 4112;
-            acknowledgement1.MsgType = MessageType.Ack;
-            acknowledgement1.Content = msg.MsgId;
-            SendMessage(acknowledgement1);
-            Console.WriteLine($"Sending acknowledgement of msgID : {acknowledgement1.MsgId}");
-        }
-        else
-        {
-            Console.WriteLine("could not send an acknowledgement");
-        }
-            
-        
     }
 }
