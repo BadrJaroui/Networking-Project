@@ -72,6 +72,8 @@ class ServerUDP
             SendDNSMesageSystem();
             SendDNSMesageSystem();
             SendDNSMesageSystem();
+            SendDNSMesageSystem();
+            SendDNSMesageSystem();
 
             ReceiveMessage();
             
@@ -90,28 +92,27 @@ class ServerUDP
     private static void SendDNSMesageSystem()
     {
         Message DNSLookup = ReceiveMessage();
+        MessageType checkAck = AcknowledgementOrEndMessage(DNSLookup);
         Message DNSlookupReply = CreateDNSLookupReply(DNSLookup);
-        SendMessage(DNSlookupReply);
-        Message lookupOrAck = ReceiveMessage();
-        bool checkAck1 = AcknowledgementOrEndMessage(lookupOrAck);
 
-        if (!checkAck1)
+        if (checkAck == MessageType.DNSLookup)
         {
-            SendMessage(lookupOrAck);
+            SendMessage(DNSlookupReply);
         }
     }
-    private static bool AcknowledgementOrEndMessage(Message lookupOrAck)
+    private static MessageType AcknowledgementOrEndMessage(Message lookupOrAck)
     {
         if (lookupOrAck.MsgType == MessageType.Ack)
         {
             Console.WriteLine("Acknowledgement received: " + ConvertMsgToString(lookupOrAck));
-            return true;
+            return MessageType.Ack;
         }
         if (lookupOrAck.MsgType == MessageType.End)
         {
-            Console.WriteLine("client disconnected");
+            return MessageType.End;
         }
-        return false;
+
+        return MessageType.DNSLookup;
     }
 
     private static void ServerBinding(Socket socket, IPEndPoint endpoint)
