@@ -96,14 +96,15 @@ class ServerUDP
         
         if (checkAck == MessageType.Ack)
         {
-            Console.WriteLine("Received acknowledgement");
+            //For confirmation
+            //Console.WriteLine("Received acknowledgement");
         }
     }
     private static MessageType CheckMessageType(Message lookupOrAck)
     {
         if (lookupOrAck.MsgType == MessageType.Ack)
         {
-            //For conmfirmation
+            //For confirmation
             //Console.WriteLine("Acknowledgement received: " + ConvertMsgToString(lookupOrAck));
             return MessageType.Ack;
         }
@@ -123,7 +124,7 @@ class ServerUDP
     private static void ServerBinding(Socket socket, IPEndPoint endpoint)
     {
         socket.Bind(endpoint);
-        Console.WriteLine("connection binded");
+        Console.WriteLine("Connection binded");
     }
     
     private static void SendMessage(Message msg)
@@ -131,7 +132,9 @@ class ServerUDP
         string msgString = JsonSerializer.Serialize(msg);
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
         int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
-        Console.WriteLine($"Server sent: {msgString}");
+        
+        //For confirmation
+        //Console.WriteLine($"Server sent: {msgString}");
     } 
 
     private static Message ReceiveMessage()
