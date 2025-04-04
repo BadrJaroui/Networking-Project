@@ -47,9 +47,13 @@ class ClientUDP
             msg.MsgId = 2;
             msg.MsgType = MessageType.Hello;
             msg.Content = "Hello";
-        
             SendMessage(msg);
-            ReceiveMessage();
+            
+            Message receivedMessage = ReceiveMessage();
+            if (receivedMessage.MsgType != MessageType.Welcome)
+            {
+                throw new Exception("Expected welcome message.");
+            }
             
             //Sends 2 valid DNS lookups
             Message Message1 = new Message();
@@ -137,8 +141,7 @@ class ClientUDP
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
         int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
         
-        //For confirmation
-        //Console.WriteLine($"Client sent: {msgString}\n");
+        Console.WriteLine($"Client sent: {msgString}");
     }
     
     
