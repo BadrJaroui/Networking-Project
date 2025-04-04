@@ -60,25 +60,7 @@ class ServerUDP
         {
         try   
         {
-            ReceiveMessage();
-            
-            Message welcomeMsg = new();
-            welcomeMsg.MsgId = 1;
-            welcomeMsg.MsgType = MessageType.Welcome;
-            welcomeMsg.Content = "Welcome";
-            SendMessage(welcomeMsg);
-            
-
             SendDNSMesageSystem();
-            SendDNSMesageSystem();
-            SendDNSMesageSystem();
-            SendDNSMesageSystem();
-            SendDNSMesageSystem();
-            SendDNSMesageSystem();
-            SendDNSMesageSystem();
-            
-            ReceiveMessage();
-            
         }
         catch (SocketException)
         {
@@ -94,16 +76,30 @@ class ServerUDP
     //sends and receives dns messages, checks if received message is an acknowledgement or End message
     private static void SendDNSMesageSystem()
     {
-        Message DNSLookup = ReceiveMessage();
-        MessageType checkAck = AcknowledgementOrEndMessage(DNSLookup);
-        Message DNSlookupReply = CreateDNSLookupReply(DNSLookup);
+        Message receivedMessage = ReceiveMessage();
+        MessageType checkAck = CheckMessageType(receivedMessage);
 
         if (checkAck == MessageType.DNSLookup)
         {
+            Message DNSlookupReply = CreateDNSLookupReply(receivedMessage);
             SendMessage(DNSlookupReply);
         }
+        
+        if (checkAck == MessageType.Hello)
+        {
+            Message welcomeMsg = new();
+            welcomeMsg.MsgId = 1;
+            welcomeMsg.MsgType = MessageType.Welcome;
+            welcomeMsg.Content = "Welcome";
+            SendMessage(welcomeMsg);
+        }
+        
+        if (checkAck == MessageType.Ack)
+        {
+            Console.WriteLine("Received acknowledgement");
+        }
     }
-    private static MessageType AcknowledgementOrEndMessage(Message lookupOrAck)
+    private static MessageType CheckMessageType(Message lookupOrAck)
     {
         if (lookupOrAck.MsgType == MessageType.Ack)
         {
@@ -116,6 +112,11 @@ class ServerUDP
             return MessageType.End;
         }
 
+        if (lookupOrAck.MsgType == MessageType.Hello)
+        {
+            return MessageType.Hello;
+        }
+        
         return MessageType.DNSLookup;
     }
 
