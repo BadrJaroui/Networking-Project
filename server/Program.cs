@@ -53,14 +53,43 @@ class ServerUDP
         return records;
     }
 
-    public static void start()
+public static void start()
+{
+    ServerBinding(socket, ServerEndpoint); 
+    Console.WriteLine("Server started. Waiting for Hello message...");
+
+    bool confirmHello = false;
+
+    while (true)
     {
-        ServerBinding(socket, ServerEndpoint); 
-        while (true)
+        try
         {
-        try   
-        {
-            SendDNSMesageSystem();
+            Message receivedMessage = ReceiveMessage();
+
+            if (!confirmHello)
+            {
+                if (receivedMessage.MsgType == MessageType.Hello)
+                {
+                    Message welcomeMsg = new();
+                    welcomeMsg.MsgId = receivedMessage.MsgId;
+                    welcomeMsg.MsgType = MessageType.Welcome;
+                    welcomeMsg.Content = "Welcome";
+                    SendMessage(welcomeMsg);
+                    confirmHello = true;
+                }
+                else
+                {
+                    Message errorMsg = new();
+                    errorMsg.MsgId = receivedMessage.MsgId;
+                    errorMsg.MsgType = MessageType.Error;
+                    errorMsg.Content = "No hello message received.";
+                    SendMessage(errorMsg);
+                }
+
+                continue;
+            }
+            
+            SendDNSMesageSystem(receivedMessage);
         }
         catch (SocketException)
         {
@@ -68,44 +97,42 @@ class ServerUDP
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Exception message:" + ex.Message);
-        }
+            Console.WriteLine("Exception message: " + ex.Message);
         }
     }
+}
     
     //sends and receives dns messages, checks if received message is an acknowledgement or End message
-    private static void SendDNSMesageSystem()
+    private static void SendDNSMesageSystem(Message receivedMessage)
     {
-        Message receivedMessage = ReceiveMessage();
-        MessageType checkAck = CheckMessageType(receivedMessage);
+        MessageType checkType = CheckMessageType(receivedMessage);
 
-        if (checkAck == MessageType.DNSLookup)
+        if (checkType == MessageType.DNSLookup)
         {
             Message DNSlookupReply = CreateDNSLookupReply(receivedMessage);
             SendMessage(DNSlookupReply);
         }
         
-        if (checkAck == MessageType.Hello)
+        if (checkType == MessageType.Ack)
         {
-            Message welcomeMsg = new();
-            welcomeMsg.MsgId = 1;
-            welcomeMsg.MsgType = MessageType.Welcome;
-            welcomeMsg.Content = "Welcome";
-            SendMessage(welcomeMsg);
+            Console.WriteLine("Received acknowledgement");
         }
         
-        if (checkAck == MessageType.Ack)
+        if (checkType == MessageType.End)
         {
-            //For confirmation
-            //Console.WriteLine("Received acknowledgement");
+            Console.WriteLine("Received End message");
+        }
+
+        else
+        {
+            Console.WriteLine($"Unexpected message received: {receivedMessage.MsgType}");
         }
     }
     private static MessageType CheckMessageType(Message lookupOrAck)
     {
         if (lookupOrAck.MsgType == MessageType.Ack)
         {
-            //For confirmation
-            //Console.WriteLine("Acknowledgement received: " + ConvertMsgToString(lookupOrAck));
+            Console.WriteLine("Acknowledgement received: " + ConvertMsgToString(lookupOrAck));
             return MessageType.Ack;
         }
         if (lookupOrAck.MsgType == MessageType.End)
@@ -133,8 +160,7 @@ class ServerUDP
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
         int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
         
-        //For confirmation
-        //Console.WriteLine($"Server sent: {msgString}");
+        Console.WriteLine($"Server sent: {msgString}");
     } 
 
     private static Message ReceiveMessage()
@@ -149,13 +175,23 @@ class ServerUDP
         Message message = ConvertDictToMsg(dictMessage);
         string stringMessage = ConvertMsgToString(message);
         
-        Console.WriteLine("received message: " + stringMessage);
+        Console.WriteLine("received message: " + stringMessage + "\n");
         return message;
     }
     
     private static bool recordNotFound = false; 
     private static Message CreateDNSLookupReply(Message DNSMessage)
     {
+        if (!(DNSContentCheck(DNSMessage)))
+        {
+            Message error = new();
+            error.MsgId = 7534445;
+            error.MsgType = MessageType.Error;
+            error.Content = "Domain not found";
+            recordNotFound = true;
+            return error;
+        }
+        
         DNSRecord record = FindCorrectDNSRecord(DNSMessage);
         Message DNSLookupReply = new();
 
@@ -173,6 +209,16 @@ class ServerUDP
         DNSLookupReply.Content = record;
 
         return DNSLookupReply;
+    }
+
+    public static bool DNSContentCheck(Message DNSMessage)
+    {
+        if (DNSMessage.Content == null || DNSMessage.MsgId == null)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private static DNSRecord? FindCorrectDNSRecord(Message DNSmessage)
