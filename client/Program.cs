@@ -100,6 +100,8 @@ class ClientUDP
             endMessage.MsgType = MessageType.End;
             endMessage.Content = "No Lookups anymore";
             SendMessage(endMessage);
+
+            Console.WriteLine("Closing connection.");
             socket.Close();
         }
         catch (Exception ex)

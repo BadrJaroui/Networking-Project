@@ -74,7 +74,8 @@ class ServerUDP
             SendDNSMesageSystem();
             SendDNSMesageSystem();
             SendDNSMesageSystem();
-
+            SendDNSMesageSystem();
+            
             ReceiveMessage();
             
         }
