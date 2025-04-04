@@ -56,25 +56,29 @@ class ServerUDP
     public static void start()
     {
         ServerBinding(socket, ServerEndpoint); 
-        
+    
         while (true)
         {
             try
             {
-                ReceiveMessage();
-                
+                Message receivedMessage = ReceiveMessage();
+                if (receivedMessage.MsgType == MessageType.End)
+                {
+                    Console.WriteLine("Received 'End' message. Stopping server communication.");
+                    break;  // Exit the loop and stop the server
+                }
+            
                 Message welcomeMsg = new();
                 welcomeMsg.MsgId = 1;
                 welcomeMsg.MsgType = MessageType.Welcome;
                 welcomeMsg.Content = "Welcome";
                 SendMessage(welcomeMsg);
-            
 
                 SendDNSMesageSystem();
                 SendDNSMesageSystem();
                 SendDNSMesageSystem();
                 SendDNSMesageSystem();
-            
+        
             }
             catch (SocketException)
             {
