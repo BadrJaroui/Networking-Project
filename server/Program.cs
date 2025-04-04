@@ -122,17 +122,12 @@ public static void start()
         {
             Console.WriteLine("Received End message");
         }
-
-        else
-        {
-            Console.WriteLine($"Unexpected message received: {receivedMessage.MsgType}");
-        }
     }
     private static MessageType CheckMessageType(Message lookupOrAck)
     {
         if (lookupOrAck.MsgType == MessageType.Ack)
         {
-            Console.WriteLine("Acknowledgement received: " + ConvertMsgToString(lookupOrAck));
+            //Console.WriteLine("Acknowledgement received: " + ConvertMsgToString(lookupOrAck));
             return MessageType.Ack;
         }
         if (lookupOrAck.MsgType == MessageType.End)
@@ -160,7 +155,7 @@ public static void start()
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
         int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
         
-        Console.WriteLine($"Server sent: {msgString}");
+        //Console.WriteLine($"Server sent: {msgString}");
     } 
 
     private static Message ReceiveMessage()
@@ -182,16 +177,6 @@ public static void start()
     private static bool recordNotFound = false; 
     private static Message CreateDNSLookupReply(Message DNSMessage)
     {
-        if (!(DNSContentCheck(DNSMessage)))
-        {
-            Message error = new();
-            error.MsgId = 7534445;
-            error.MsgType = MessageType.Error;
-            error.Content = "Domain not found";
-            recordNotFound = true;
-            return error;
-        }
-        
         DNSRecord record = FindCorrectDNSRecord(DNSMessage);
         Message DNSLookupReply = new();
 
@@ -209,16 +194,6 @@ public static void start()
         DNSLookupReply.Content = record;
 
         return DNSLookupReply;
-    }
-
-    public static bool DNSContentCheck(Message DNSMessage)
-    {
-        if (DNSMessage.Content == null || DNSMessage.MsgId == null)
-        {
-            return false;
-        }
-
-        return true;
     }
 
     private static DNSRecord? FindCorrectDNSRecord(Message DNSmessage)

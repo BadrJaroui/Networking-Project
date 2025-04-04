@@ -141,7 +141,7 @@ class ClientUDP
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
         int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
         
-        Console.WriteLine($"Client sent: {msgString}");
+        //Console.WriteLine($"Client sent: {msgString}");
     }
     
     
