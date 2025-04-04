@@ -56,7 +56,8 @@ class ServerUDP
     public static void start()
     {
         ServerBinding(socket, ServerEndpoint); 
-        
+        while (true)
+        {
         try   
         {
             ReceiveMessage();
@@ -87,6 +88,7 @@ class ServerUDP
         {
             Console.WriteLine("Exception message:" + ex.Message);
         }
+        }
     }
     
     //sends and receives dns messages, checks if received message is an acknowledgement or End message
@@ -105,7 +107,8 @@ class ServerUDP
     {
         if (lookupOrAck.MsgType == MessageType.Ack)
         {
-            Console.WriteLine("Acknowledgement received: " + ConvertMsgToString(lookupOrAck));
+            //For conmfirmation
+            //Console.WriteLine("Acknowledgement received: " + ConvertMsgToString(lookupOrAck));
             return MessageType.Ack;
         }
         if (lookupOrAck.MsgType == MessageType.End)
