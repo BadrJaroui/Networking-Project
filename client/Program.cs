@@ -134,7 +134,9 @@ class ClientUDP
         string msgString = JsonSerializer.Serialize(msg);
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
         int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
-        Console.WriteLine($"Client sent: {msgString}\n");
+        
+        // For confirmation
+        // Console.WriteLine($"Client sent: {msgString}\n");
     }
     
     

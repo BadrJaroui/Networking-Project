@@ -57,32 +57,33 @@ class ServerUDP
     {
         ServerBinding(socket, ServerEndpoint); 
         
-        try   
+        while (true)
         {
-            ReceiveMessage();
-            
-            Message welcomeMsg = new();
-            welcomeMsg.MsgId = 1;
-            welcomeMsg.MsgType = MessageType.Welcome;
-            welcomeMsg.Content = "Welcome";
-            SendMessage(welcomeMsg);
+            try
+            {
+                ReceiveMessage();
+                
+                Message welcomeMsg = new();
+                welcomeMsg.MsgId = 1;
+                welcomeMsg.MsgType = MessageType.Welcome;
+                welcomeMsg.Content = "Welcome";
+                SendMessage(welcomeMsg);
             
 
-            SendDNSMesageSystem();
-            SendDNSMesageSystem();
-            SendDNSMesageSystem();
-            SendDNSMesageSystem();
-
-            ReceiveMessage();
+                SendDNSMesageSystem();
+                SendDNSMesageSystem();
+                SendDNSMesageSystem();
+                SendDNSMesageSystem();
             
-        }
-        catch (SocketException)
-        {
-            Console.WriteLine("Client disconnected");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Exception message:" + ex.Message);
+            }
+            catch (SocketException)
+            {
+                Console.WriteLine("Client disconnected");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception message:" + ex.Message);
+            }
         }
     }
     
@@ -90,28 +91,27 @@ class ServerUDP
     private static void SendDNSMesageSystem()
     {
         Message DNSLookup = ReceiveMessage();
+        MessageType checkAck = AcknowledgementOrEndMessage(DNSLookup);
         Message DNSlookupReply = CreateDNSLookupReply(DNSLookup);
-        SendMessage(DNSlookupReply);
-        Message lookupOrAck = ReceiveMessage();
-        bool checkAck1 = AcknowledgementOrEndMessage(lookupOrAck);
 
-        if (!checkAck1)
+        if (checkAck == MessageType.DNSLookup)
         {
-            SendMessage(lookupOrAck);
+            SendMessage(DNSlookupReply);
         }
     }
-    private static bool AcknowledgementOrEndMessage(Message lookupOrAck)
+    private static MessageType AcknowledgementOrEndMessage(Message lookupOrAck)
     {
         if (lookupOrAck.MsgType == MessageType.Ack)
         {
             Console.WriteLine("Acknowledgement received: " + ConvertMsgToString(lookupOrAck));
-            return true;
+            return MessageType.Ack;
         }
         if (lookupOrAck.MsgType == MessageType.End)
         {
-            Console.WriteLine("client disconnected");
+            return MessageType.End;
         }
-        return false;
+
+        return MessageType.DNSLookup;
     }
 
     private static void ServerBinding(Socket socket, IPEndPoint endpoint)
@@ -125,7 +125,9 @@ class ServerUDP
         string msgString = JsonSerializer.Serialize(msg);
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
         int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
-        Console.WriteLine($"Server sent: {msgString}");
+        
+        // For confirmation
+        // Console.WriteLine($"Server sent: {msgString}");
     } 
 
     private static Message ReceiveMessage()
@@ -200,13 +202,8 @@ class ServerUDP
         }
 
         // If there's only A-type record matches, returns the first record in list
-        if (!(MXflag))
-        {
-       
-            var matchingrecord = matchingRecords[0];
-            return matchingRecords[0];
-        }
-
+        if (!(MXflag)) return matchingRecords[0];
+        
         return null;
     }
 
