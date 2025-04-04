@@ -40,7 +40,7 @@ class ClientUDP
     public static void start()
     {
         SocketCreation(socket, ClientEndpoint);
-       
+        
         try
         {
             Message msg = new();
@@ -51,6 +51,7 @@ class ClientUDP
             SendMessage(msg);
             ReceiveMessage();
             
+            //Sends 2 valid DNS lookups
             Message Message1 = new Message();
             Message1.MsgId = 3;
             Message1.MsgType = MessageType.DNSLookup;
@@ -71,6 +72,8 @@ class ClientUDP
 
             if (!(ack2 is null)) SendMessage(ack2);
 
+
+            //Sends 2 invalid DNS lookups
             Message Message3 = new Message();
             Message3.MsgId = 7;
             Message3.MsgType = MessageType.DNSLookup;
@@ -91,6 +94,7 @@ class ClientUDP
 
             if (!(ack4 is null)) SendMessage(ack4);
 
+            //End message
             Message endMessage = new Message();
             endMessage.MsgId = 999;
             endMessage.MsgType = MessageType.End;
@@ -122,7 +126,7 @@ class ClientUDP
     private static void SocketCreation(Socket socket, IPEndPoint endpoint)
     {
         socket.Bind(endpoint);
-        Console.WriteLine("Connection started.");
+        Console.WriteLine("Connection started.\n");
     }
     
     private static void SendMessage(Message msg)
@@ -133,6 +137,7 @@ class ClientUDP
         Console.WriteLine($"Client sent: {msgString}\n");
     }
     
+    
     private static Message ReceiveMessage()
     {
         Console.WriteLine("\nTrying to receive message...");
@@ -140,17 +145,19 @@ class ClientUDP
         byte[] messageSize = new byte[1000];
         int receivedMessage = socket.ReceiveFrom(messageSize, ref convertedEndpoint);
         
+        //converts the received message to string 
         string jsonString = Encoding.UTF8.GetString(messageSize, 0, receivedMessage);
         Dictionary<string, object> dictMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
         Message message = ConvertDictToMsg(dictMessage);
 
+        //Converts index to messagetype for display Messagetype name
         int index = ((JsonElement)dictMessage["MsgType"]).GetInt32();
         MessageType msgType = (MessageType)index;
         message.MsgType = msgType;
 
         string stringMessage = ConvertMsgToString(message);
         
-        Console.WriteLine("received message: " + stringMessage + "\n");
+        Console.WriteLine("Received message: " + stringMessage + "\n");
         return message;
     }
     

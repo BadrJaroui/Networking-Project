@@ -67,59 +67,40 @@ class ServerUDP
             welcomeMsg.Content = "Welcome";
             SendMessage(welcomeMsg);
             
-            Message DNSLookup = ReceiveMessage();
-            Message DNSlookupReply = CreateDNSLookupReply(DNSLookup);
-            SendMessage(DNSlookupReply);
-            Message lookupOrAck = ReceiveMessage();
-            bool checkAck1 = AcknowledgmentorNot(lookupOrAck);
 
-            if (!checkAck1)
-            {
-                SendMessage(lookupOrAck);
-            }
+            SendDNSMesageSystem();
+            SendDNSMesageSystem();
+            SendDNSMesageSystem();
+            SendDNSMesageSystem();
 
-            Message DNSLookup2 = ReceiveMessage();
-            Message DNSlookupReply2 = CreateDNSLookupReply(DNSLookup2);
-            SendMessage(DNSlookupReply2);
-            Message lookupOrAck2 = ReceiveMessage();
-            bool checkAck2 = AcknowledgmentorNot(lookupOrAck2);
-
-            if (!checkAck2)
-            {
-                SendMessage(lookupOrAck2);
-            }
-    
-            Message DNSLookup3 = ReceiveMessage();
-            Message DNSlookupReply3 = CreateDNSLookupReply(DNSLookup3);
-            SendMessage(DNSlookupReply3);
-            Message lookupOrAck3 = ReceiveMessage();
-            bool checkAck3 = AcknowledgmentorNot(lookupOrAck3);
-
-            if (!checkAck3)
-            {
-                SendMessage(lookupOrAck3);
-            }
-
-            Message DNSLookup4 = ReceiveMessage();
-            Message DNSlookupReply4 = CreateDNSLookupReply(DNSLookup4);
-            SendMessage(DNSlookupReply4);
-            Message lookupOrAck4 = ReceiveMessage();
-            bool checkAck4 = AcknowledgmentorNot(lookupOrAck4);
-
-            if (!checkAck4)
-            {
-                SendMessage(lookupOrAck4);
-            }
-
+            ReceiveMessage();
+            
         }
-        
+        catch (SocketException)
+        {
+            Console.WriteLine("Client disconnected");
+        }
         catch (Exception ex)
         {
-            Console.WriteLine("exception: " + ex.Message);
+            Console.WriteLine("Exception message:" + ex.Message);
         }
     }
     
-    private static bool AcknowledgmentorNot(Message lookupOrAck)
+    //sends and receives dns messages, checks if received message is an acknowledgement or End message
+    private static void SendDNSMesageSystem()
+    {
+        Message DNSLookup = ReceiveMessage();
+        Message DNSlookupReply = CreateDNSLookupReply(DNSLookup);
+        SendMessage(DNSlookupReply);
+        Message lookupOrAck = ReceiveMessage();
+        bool checkAck1 = AcknowledgementOrEndMessage(lookupOrAck);
+
+        if (!checkAck1)
+        {
+            SendMessage(lookupOrAck);
+        }
+    }
+    private static bool AcknowledgementOrEndMessage(Message lookupOrAck)
     {
         if (lookupOrAck.MsgType == MessageType.Ack)
         {
@@ -144,8 +125,8 @@ class ServerUDP
         string msgString = JsonSerializer.Serialize(msg);
         byte[] messageSize = Encoding.ASCII.GetBytes(msgString);
         int bytesSent = socket.SendTo(messageSize, convertedEndpoint);
-        Console.WriteLine($"Server sent: {msgString} \n");
-    }
+        Console.WriteLine($"Server sent: {msgString}");
+    } 
 
     private static Message ReceiveMessage()
     {
@@ -159,7 +140,7 @@ class ServerUDP
         Message message = ConvertDictToMsg(dictMessage);
         string stringMessage = ConvertMsgToString(message);
         
-        Console.WriteLine("received message: " + stringMessage + "\n");
+        Console.WriteLine("received message: " + stringMessage);
         return message;
     }
     
@@ -228,6 +209,7 @@ class ServerUDP
 
         return null;
     }
+
 
     private static List<DNSRecord> DNSMatchCheck(Message DNSmessage)
     {
